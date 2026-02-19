@@ -16,6 +16,7 @@ export default function EditarProducto() {
   const [name, setName] = useState(product?.name || "");
   const [category, setCategory] = useState(product?.category || "");
   const [stock, setStock] = useState(String(product?.stock ?? ""));
+  const [cost, setCost] = useState(String(product?.cost ?? ""));
 
   const [error, setError] = useState("");
 
@@ -38,12 +39,19 @@ export default function EditarProducto() {
     const n = name.trim();
     const c = category.trim();
     const s = Number(stock);
+    const co = Number(cost);
 
     if (!n) return setError("El nombre es requerido.");
     if (!c) return setError("La categoria es requerida.");
+    if (!Number.isFinite(co) || co < 0) return setError("Costo invalido.");
     if (!Number.isFinite(s) || s < 0) return setError("Stock invalido.");
 
-    updateProduct(product.id, { name: n, category: c, stock: Math.floor(s) });
+    updateProduct(product.id, {
+      name: n,
+      category: c,
+      cost: co,
+      stock: Math.floor(s),
+    });
     navigate("/inventario");
   };
 
@@ -87,6 +95,17 @@ export default function EditarProducto() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="Ej: Despensa"
+          />
+        </label>
+
+        <label className="field">
+          <span className="fieldLabel">Costo</span>
+          <input
+            className="fieldInput"
+            value={cost}
+            onChange={(e) => setCost(e.target.value)}
+            inputMode="decimal"
+            placeholder="0.00"
           />
         </label>
 

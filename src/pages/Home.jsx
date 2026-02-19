@@ -3,6 +3,11 @@ import "./Home.css";
 
 const items = [
   { to: "/inventario", title: "Inventario", desc: "Productos disponibles y stock." },
+  {
+    to: "/inventario/nuevo",
+    title: "Agregar producto",
+    desc: "Carga de nuevos productos e imagen.",
+  },
   { to: "/clientes", title: "Clientes", desc: "Alta, edicion y consulta rapida." },
   { to: "/reportes", title: "Reportes", desc: "Resumenes y exportaciones." },
   { to: "/configuracion", title: "Configuracion", desc: "Preferencias del sistema." },

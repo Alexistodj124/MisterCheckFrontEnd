@@ -4,6 +4,7 @@ export const defaultProducts = [
     name: "Leche entera 1L",
     sku: "LECH-1L-ENT",
     category: "Lacteos",
+    cost: 1.15,
     stock: 18,
   },
   {
@@ -11,6 +12,7 @@ export const defaultProducts = [
     name: "Yogurt natural 200g",
     sku: "YOG-200-NAT",
     category: "Lacteos",
+    cost: 0.65,
     stock: 6,
   },
   {
@@ -18,6 +20,7 @@ export const defaultProducts = [
     name: "Pan de molde",
     sku: "PAN-MOL-680",
     category: "Panaderia",
+    cost: 1.45,
     stock: 4,
   },
   {
@@ -25,6 +28,7 @@ export const defaultProducts = [
     name: "Cereal avena 500g",
     sku: "AVEN-500",
     category: "Despensa",
+    cost: 2.05,
     stock: 12,
   },
   {
@@ -32,6 +36,7 @@ export const defaultProducts = [
     name: "Atun en lata",
     sku: "ATUN-140",
     category: "Despensa",
+    cost: 1.1,
     stock: 30,
   },
   {
@@ -39,6 +44,7 @@ export const defaultProducts = [
     name: "Jabon liquido 1L",
     sku: "JAB-LIQ-1L",
     category: "Limpieza",
+    cost: 3.25,
     stock: 2,
   },
   {
@@ -46,6 +52,7 @@ export const defaultProducts = [
     name: "Papel higienico x4",
     sku: "PH-4",
     category: "Limpieza",
+    cost: 2.75,
     stock: 9,
   },
 ];

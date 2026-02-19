@@ -3,6 +3,12 @@ import { defaultProducts } from "./defaultProducts";
 
 const STORAGE_KEY = "mistercheck.inventory.v1";
 
+function createId() {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `p-${ts}-${rand}`;
+}
+
 function readInitialProducts() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -30,13 +36,29 @@ export function InventoryProvider({ children }) {
   }, [products]);
 
   const value = useMemo(() => {
+    const addProduct = (draft) => {
+      const next = {
+        id: createId(),
+        name: String(draft?.name || "").trim(),
+        sku: String(draft?.sku || "").trim(),
+        category: String(draft?.category || "").trim(),
+        cost: Number(draft?.cost) || 0,
+        stock: Number(draft?.stock) || 0,
+        imageDataUrl: typeof draft?.imageDataUrl === "string" ? draft.imageDataUrl : "",
+        notes: String(draft?.notes || "").trim(),
+      };
+
+      setProducts((prev) => [next, ...prev]);
+      return next;
+    };
+
     const updateProduct = (id, patch) => {
       setProducts((prev) =>
         prev.map((p) => (p.id === id ? { ...p, ...patch } : p))
       );
     };
 
-    return { products, setProducts, updateProduct };
+    return { products, setProducts, addProduct, updateProduct };
   }, [products]);
 
   return (

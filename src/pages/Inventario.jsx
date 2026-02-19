@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useInventory } from "../store/inventoryStore";
 import "./Inventario.css";
@@ -12,6 +12,7 @@ function normalize(s) {
 
 export default function Inventario() {
   const { products } = useInventory();
+  const navigate = useNavigate();
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [editMode, setEditMode] = useState(false);
@@ -60,13 +61,23 @@ export default function Inventario() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className={editMode ? "btn" : "btnGhost"}
-            onClick={() => setEditMode((v) => !v)}
-          >
-            {editMode ? "Listo" : "Editar productos"}
-          </button>
+          <div className="invHeaderActions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => navigate("/inventario/nuevo")}
+            >
+              Agregar producto
+            </button>
+
+            <button
+              type="button"
+              className={editMode ? "btn" : "btnGhost"}
+              onClick={() => setEditMode((v) => !v)}
+            >
+              {editMode ? "Listo" : "Editar productos"}
+            </button>
+          </div>
         </div>
       </header>
 

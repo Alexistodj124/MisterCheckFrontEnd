@@ -21,6 +21,8 @@
 }
 
 .invStats{ display:flex; gap: 10px; flex-wrap: wrap; justify-content:flex-end; }
+.invHeaderRight{ display:flex; align-items:flex-start; gap: 12px; flex-wrap: wrap; justify-content:flex-end; }
+.invHeaderActions{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; justify-content:flex-end; }
 .statPill{
   display:flex;
   align-items:baseline;
@@ -84,6 +86,11 @@
   text-transform: uppercase;
 }
 
+.invCard.noActions .invTableHead,
+.invCard.noActions .invRow{
+  grid-template-columns: 1.6fr 1fr 120px;
+}
+
 .invTable{ display:flex; flex-direction:column; }
 
 .invRow{
@@ -123,9 +130,12 @@
 @media (max-width: 760px){
   .invHeader{ flex-direction:column; }
   .invStats{ justify-content:flex-start; }
+  .invHeaderRight{ justify-content:flex-start; }
+  .invHeaderActions{ justify-content:flex-start; }
 
   .invTableHead{ display:none; }
   .invRow{ grid-template-columns: 1fr 120px; grid-auto-rows: auto; }
+  .invCard.noActions .invRow{ grid-template-columns: 1fr 120px; }
   .hideSm{ display:none; }
   .onlySm{ display:inline; }
   .colActions{ justify-self: end; }
