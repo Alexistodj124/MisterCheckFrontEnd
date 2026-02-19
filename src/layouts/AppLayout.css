@@ -1,0 +1,56 @@
+.appShell{ min-height:100vh; }
+
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:10;
+  backdrop-filter: blur(10px);
+  background: rgba(9,14,28,.55);
+  border-bottom: 1px solid var(--stroke);
+}
+
+.topbarInner{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+}
+
+.brand{ display:flex; align-items:center; gap:10px; }
+.brandMark{
+  width:14px;
+  height:14px;
+  border-radius:6px;
+  background: linear-gradient(135deg, var(--accent), #ffd27a);
+  box-shadow: 0 10px 30px rgba(240,180,41,.35);
+}
+.brandText{ font-weight:700; letter-spacing:.2px; }
+
+.nav{ display:flex; gap: 6px; flex-wrap: wrap; justify-content:flex-end; }
+.navLink{
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+}
+.navLink:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.05);
+  border-color: var(--stroke);
+  color: var(--text);
+}
+.navLink.isActive{
+  background: rgba(240,180,41,.14);
+  border-color: rgba(240,180,41,.35);
+  color: var(--text);
+}
+
+.main{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 18px 54px;
+}
