@@ -1,0 +1,51 @@
+export const defaultProducts = [
+  {
+    id: "p-001",
+    name: "Leche entera 1L",
+    sku: "LECH-1L-ENT",
+    category: "Lacteos",
+    stock: 18,
+  },
+  {
+    id: "p-002",
+    name: "Yogurt natural 200g",
+    sku: "YOG-200-NAT",
+    category: "Lacteos",
+    stock: 6,
+  },
+  {
+    id: "p-003",
+    name: "Pan de molde",
+    sku: "PAN-MOL-680",
+    category: "Panaderia",
+    stock: 4,
+  },
+  {
+    id: "p-004",
+    name: "Cereal avena 500g",
+    sku: "AVEN-500",
+    category: "Despensa",
+    stock: 12,
+  },
+  {
+    id: "p-005",
+    name: "Atun en lata",
+    sku: "ATUN-140",
+    category: "Despensa",
+    stock: 30,
+  },
+  {
+    id: "p-006",
+    name: "Jabon liquido 1L",
+    sku: "JAB-LIQ-1L",
+    category: "Limpieza",
+    stock: 2,
+  },
+  {
+    id: "p-007",
+    name: "Papel higienico x4",
+    sku: "PH-4",
+    category: "Limpieza",
+    stock: 9,
+  },
+];

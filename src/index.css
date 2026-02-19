@@ -30,4 +30,28 @@ body{
     linear-gradient(180deg, var(--bg0), var(--bg1));
 }
 
+@keyframes enter{
+  from{ opacity:0; transform: translateY(10px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
 a{ color:inherit; text-decoration:none; }
+
+.btn, .btnGhost{
+  height: 40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  cursor: pointer;
+  user-select:none;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.btn{ background: rgba(240,180,41,.14); border-color: rgba(240,180,41,.35); }
+.btn:hover{ transform: translateY(-1px); background: rgba(240,180,41,.18); }
+
+.btnGhost{ background: rgba(255,255,255,.03); color: var(--text); }
+.btnGhost:hover{ transform: translateY(-1px); background: rgba(255,255,255,.06); }

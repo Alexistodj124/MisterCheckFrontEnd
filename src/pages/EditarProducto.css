@@ -1,0 +1,74 @@
+.edit{ animation: enter .45s ease both; }
+
+.editHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 14px;
+  margin: 6px 0 16px;
+}
+
+.editTitle{
+  margin:0 0 6px;
+  font-size: clamp(28px, 3.6vw, 40px);
+  letter-spacing: .2px;
+}
+
+.editSubtitle{ margin:0; color: var(--muted); max-width: 62ch; }
+
+.editMeta{ display:flex; gap: 10px; flex-wrap: wrap; justify-content:flex-end; }
+.metaPill{
+  display:flex;
+  align-items:baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.04);
+}
+.metaLabel{ color: var(--muted); font-size: 12px; letter-spacing: .2px; }
+.metaValue{ font-weight: 700; }
+
+.editCard{
+  border-radius: var(--radius);
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display:grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.field{ display:flex; flex-direction:column; gap: 6px; }
+.fieldLabel{ font-size: 12px; color: var(--muted); letter-spacing: .2px; }
+
+.fieldInput{
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: rgba(15,26,50,.55);
+  color: var(--text);
+  outline: none;
+}
+
+.fieldInput:focus{
+  border-color: rgba(240,180,41,.35);
+  box-shadow: 0 0 0 4px rgba(240,180,41,.12);
+}
+
+.error{
+  border: 1px solid rgba(255,106,106,.35);
+  background: rgba(255,106,106,.10);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.actions{ display:flex; gap: 10px; justify-content:flex-end; flex-wrap: wrap; }
+
+@media (max-width: 760px){
+  .editHeader{ flex-direction:column; }
+  .editMeta{ justify-content:flex-start; }
+}

@@ -1,8 +1,4 @@
 .home{ animation: enter .45s ease both; }
-@keyframes enter{
-  from{ opacity:0; transform: translateY(10px); }
-  to{ opacity:1; transform: translateY(0); }
-}
 
 .hero{ margin: 6px 0 18px; }
 .title{
