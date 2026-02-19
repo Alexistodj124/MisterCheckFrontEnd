@@ -6,6 +6,7 @@ const links = [
   { to: "/", label: "Inicio" },
   { to: "/inventario", label: "Inventario" },
   { to: "/inventario/nuevo", label: "Agregar producto" },
+  { to: "/cotizaciones/nueva", label: "Cotizaciones" },
   { to: "/clientes", label: "Clientes" },
   { to: "/reportes", label: "Reportes" },
   { to: "/configuracion", label: "Configuracion" },

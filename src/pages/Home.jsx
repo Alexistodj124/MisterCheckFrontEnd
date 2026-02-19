@@ -8,6 +8,11 @@ const items = [
     title: "Agregar producto",
     desc: "Carga de nuevos productos e imagen.",
   },
+  {
+    to: "/cotizaciones/nueva",
+    title: "Cotizaciones",
+    desc: "Crea cotizaciones por cliente.",
+  },
   { to: "/clientes", title: "Clientes", desc: "Alta, edicion y consulta rapida." },
   { to: "/reportes", title: "Reportes", desc: "Resumenes y exportaciones." },
   { to: "/configuracion", title: "Configuracion", desc: "Preferencias del sistema." },
