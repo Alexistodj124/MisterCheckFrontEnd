@@ -10,6 +10,7 @@ const links = [
   { to: "/clientes", label: "Clientes" },
   { to: "/reportes", label: "Reportes" },
   { to: "/herramientas", label: "Herramientas" },
+  { to: "/herramientas/asignar", label: "Asignaciones" },
   { to: "/configuracion", label: "Configuracion" },
 ];
 

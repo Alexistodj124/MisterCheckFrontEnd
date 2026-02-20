@@ -20,6 +20,11 @@ const items = [
     title: "Herramientas",
     desc: "Stock, disponibles y herramientas en uso.",
   },
+  {
+    to: "/herramientas/asignar",
+    title: "Asignaciones",
+    desc: "Asigna herramientas a trabajadores.",
+  },
   { to: "/configuracion", title: "Configuracion", desc: "Preferencias del sistema." },
 ];
 
