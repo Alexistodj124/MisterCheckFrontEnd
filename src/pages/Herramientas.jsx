@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTools } from "../store/toolStore";
 import { useWorkers } from "../store/workerStore";
+import { useAssignments } from "../store/assignmentStore";
 import "./Herramientas.css";
 
 function normalize(s) {
@@ -20,6 +21,18 @@ function availableCount(t) {
   const stock = Number(t?.stock) || 0;
   const inUse = Number(t?.inUse) || 0;
   return Math.max(0, stock - inUse);
+}
+
+function formatDateTime(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return new Intl.DateTimeFormat("es-MX", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
 }
 
 function Modal({ open, title, children, onClose }) {
@@ -48,6 +61,7 @@ function Modal({ open, title, children, onClose }) {
 export default function Herramientas() {
   const { tools, addTool, updateTool } = useTools();
   const { workers, addWorker, removeWorker } = useWorkers();
+  const { assignments } = useAssignments();
 
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
@@ -69,6 +83,8 @@ export default function Herramientas() {
   const [workerForm, setWorkerForm] = useState({ name: "", role: "" });
   const [workerError, setWorkerError] = useState("");
 
+  const [openToolId, setOpenToolId] = useState(null);
+
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== "Escape") return;
@@ -86,6 +102,27 @@ export default function Herramientas() {
     const set = new Set(tools.map((t) => t.category).filter(Boolean));
     return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [tools]);
+
+  const workerById = useMemo(() => {
+    const map = new Map();
+    workers.forEach((w) => map.set(w.id, w));
+    return map;
+  }, [workers]);
+
+  const assignedByToolId = useMemo(() => {
+    const map = new Map();
+    for (const a of assignments) {
+      if (!a?.toolId) continue;
+      const list = map.get(a.toolId) || [];
+      list.push(a);
+      map.set(a.toolId, list);
+    }
+    for (const [toolId, list] of map.entries()) {
+      list.sort((a, b) => new Date(b?.assignedAt).getTime() - new Date(a?.assignedAt).getTime());
+      map.set(toolId, list);
+    }
+    return map;
+  }, [assignments]);
 
   const stats = useMemo(() => {
     const base = { items: tools.length, stock: 0, inUse: 0, available: 0 };
@@ -310,8 +347,24 @@ export default function Herramientas() {
               const avail = Math.max(0, stock - inUse);
               const level = stock === 0 ? "danger" : avail === 0 ? "warn" : "ok";
 
+              const isOpen = openToolId === t.id;
+              const who = assignedByToolId.get(t.id) || [];
+
               return (
-                <div className="toolsRow" key={t.id} role="row">
+                <div
+                  className={"toolsRow" + (isOpen ? " isOpen" : "")}
+                  key={t.id}
+                  role="row"
+                  tabIndex={0}
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenToolId((prev) => (prev === t.id ? null : t.id))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setOpenToolId((prev) => (prev === t.id ? null : t.id));
+                    }
+                  }}
+                >
                   <div className="cellMain" role="cell">
                     <div className="tName">{t.name}</div>
                     <div className="tMeta">
@@ -342,10 +395,70 @@ export default function Herramientas() {
                   </div>
 
                   <div className="cell colActions" role="cell">
-                    <button type="button" className="btnGhost" onClick={() => openEdit(t)}>
+                    <button
+                      type="button"
+                      className="btnGhost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(t);
+                      }}
+                    >
                       Editar
                     </button>
                   </div>
+
+                  {isOpen ? (
+                    <div className="toolDetails" role="region" aria-label="Detalles">
+                      <div className="detailGrid">
+                        <div className="detailPill">
+                          <span className="detailLabel">Stock</span>
+                          <span className="detailValue">{stock}</span>
+                        </div>
+                        <div className="detailPill">
+                          <span className="detailLabel">Disponibles</span>
+                          <span className="detailValue">{avail}</span>
+                        </div>
+                        <div className="detailPill">
+                          <span className="detailLabel">En uso</span>
+                          <span className="detailValue">{inUse}</span>
+                        </div>
+                        <div className="detailPill">
+                          <span className="detailLabel">Asignaciones</span>
+                          <span className="detailValue">{who.length}</span>
+                        </div>
+                      </div>
+
+                      {t.notes ? <div className="detailNotes">{t.notes}</div> : null}
+
+                      <div className="whoBlock">
+                        <div className="whoTitle">Quien la tiene</div>
+                        {who.length === 0 ? (
+                          <div className="whoEmpty">No hay asignaciones para esta herramienta.</div>
+                        ) : (
+                          <div className="whoList" role="list" aria-label="Asignadas a">
+                            {who.map((a) => {
+                              const w = workerById.get(a.workerId);
+                              return (
+                                <div className="whoRow" key={a.id} role="listitem">
+                                  <div className="whoMain">
+                                    <div className="whoName">{w?.name || a.workerId}</div>
+                                    <div className="whoMeta">
+                                      <span>{w?.role || "(Sin rol)"}</span>
+                                      <span className="dot" aria-hidden="true" />
+                                      <span>Qty: {a.qty}</span>
+                                      <span className="dot" aria-hidden="true" />
+                                      <span>{formatDateTime(a.assignedAt)}</span>
+                                    </div>
+                                  </div>
+                                  <span className="whoQty">{a.qty}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               );
             })

@@ -91,7 +91,6 @@
   padding: 16px;
   display:grid;
   gap: 12px;
-  overflow:hidden;
 }
 
 .cardTitle{ font-weight: 900; letter-spacing: .2px; }
@@ -104,12 +103,12 @@
 .aHead, .aRow,
 .tHead, .tRow{
   display:grid;
-  grid-template-columns: 1.5fr 90px 160px 240px;
+  grid-template-columns: minmax(0, 1.9fr) 70px 150px;
   gap: 10px;
   align-items:center;
 }
 
-.tHead, .tRow{ grid-template-columns: 1.5fr 1fr 90px 240px; }
+.tHead, .tRow{ grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) 70px 150px; }
 
 .aHead, .tHead{
   color: var(--muted);
@@ -124,6 +123,7 @@
   border-radius: 16px;
   border: 1px solid rgba(42,58,99,.45);
   background: rgba(255,255,255,.03);
+  align-items: start;
 }
 
 .cell{ min-width: 0; }
@@ -161,27 +161,21 @@
 .numPill.warn{ border-color: rgba(240,180,41,.35); background: rgba(240,180,41,.12); }
 .numPill.info{ border-color: rgba(61,152,255,.32); background: rgba(61,152,255,.10); }
 
-.assignBox, .returnBox{ display:flex; gap: 10px; align-items:center; justify-content:flex-end; flex-wrap: wrap; }
 
-.qtyInput{
-  width: 72px;
+.colActions .btn,
+.colActions .btnGhost{
   height: 38px;
   padding: 0 10px;
   border-radius: 12px;
-  border: 1px solid var(--stroke);
-  background: rgba(15,26,50,.55);
-  color: var(--text);
-  outline: none;
-}
-
-.qtyInput:focus{
-  border-color: rgba(240,180,41,.35);
-  box-shadow: 0 0 0 4px rgba(240,180,41,.12);
 }
 
 .onlySm{ display:none; }
 
 @media (max-width: 980px){
+  .assignGrid{ grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1120px){
   .assignGrid{ grid-template-columns: 1fr; }
 }
 
@@ -196,7 +190,7 @@
   .hideSm{ display:none; }
   .onlySm{ display:inline; }
   .colActions{ justify-self: start; grid-column: 1 / -1; }
-  .assignBox, .returnBox{ justify-content:flex-start; }
+  .colActions .btn, .colActions .btnGhost{ width: fit-content; }
 }
 
 @media (max-width: 420px){

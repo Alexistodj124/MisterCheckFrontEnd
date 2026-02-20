@@ -11,12 +11,6 @@ function normalize(s) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function clampInt(n, min) {
-  const x = Math.floor(Number(n));
-  if (!Number.isFinite(x)) return min;
-  return Math.max(min, x);
-}
-
 function formatDateTime(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "-";
@@ -43,8 +37,6 @@ export default function AsignarHerramientas() {
   const [workerId, setWorkerId] = useState("");
   const [toolCategory, setToolCategory] = useState("all");
   const [query, setQuery] = useState("");
-  const [qtyDraft, setQtyDraft] = useState(() => ({}));
-  const [returnDraft, setReturnDraft] = useState(() => ({}));
   const [error, setError] = useState("");
 
   const worker = useMemo(
@@ -101,14 +93,12 @@ export default function AsignarHerramientas() {
     if (!workerId) return setError("Selecciona un trabajador primero.");
 
     const avail = availableCount(tool);
-    const draft = qtyDraft[tool.id];
-    const qty = clampInt(draft == null || draft === "" ? 1 : draft, 1);
+    const qty = 1;
     if (qty > avail) return setError("No hay suficientes disponibles para asignar.");
 
     const curInUse = Number(tool?.inUse) || 0;
     updateTool(tool.id, { inUse: curInUse + qty });
     assignTool({ workerId, toolId: tool.id, qty });
-    setQtyDraft((prev) => ({ ...prev, [tool.id]: "" }));
   };
 
   const onReturn = (a) => {
@@ -117,14 +107,12 @@ export default function AsignarHerramientas() {
     if (!tool) return;
 
     const max = Number(a?.qty) || 0;
-    const draft = returnDraft[a.toolId];
-    const qty = clampInt(draft == null || draft === "" ? max : draft, 1);
+    const qty = 1;
     if (qty > max) return setError("No puedes devolver mas de lo asignado.");
 
     const curInUse = Number(tool?.inUse) || 0;
     updateTool(tool.id, { inUse: Math.max(0, curInUse - qty) });
     unassignTool({ workerId, toolId: tool.id, qty });
-    setReturnDraft((prev) => ({ ...prev, [tool.id]: "" }));
   };
 
   return (
@@ -229,20 +217,18 @@ export default function AsignarHerramientas() {
               <div className="aHead">
                 <div>Herramienta</div>
                 <div className="colNum">Qty</div>
-                <div className="hideSm">Ultima</div>
                 <div className="colActions">Accion</div>
               </div>
 
               {workerAssignments.map((a) => {
                 const t = toolById.get(a.toolId);
                 const max = Number(a?.qty) || 0;
-                const retValue = returnDraft[a.toolId] || "";
                 return (
                   <div className="aRow" key={a.id}>
                     <div className="cellMain">
                       <div className="tName">{t?.name || a.toolId}</div>
                       <div className="tMeta">
-                        <span className="onlySm">{formatDateTime(a.assignedAt)}</span>
+                        <span>{formatDateTime(a.assignedAt)}</span>
                         {t?.category ? (
                           <>
                             <span className="dot" aria-hidden="true" />
@@ -256,31 +242,10 @@ export default function AsignarHerramientas() {
                       <span className="numPill info">{max}</span>
                     </div>
 
-                    <div className="cell hideSm">{formatDateTime(a.assignedAt)}</div>
-
                     <div className="cell colActions">
-                      <div className="returnBox">
-                        <input
-                          className="qtyInput"
-                          inputMode="numeric"
-                          value={retValue}
-                          onChange={(e) =>
-                            setReturnDraft((prev) => ({
-                              ...prev,
-                              [a.toolId]: e.target.value,
-                            }))
-                          }
-                          placeholder={String(max)}
-                          aria-label="Cantidad a devolver"
-                        />
-                        <button
-                          type="button"
-                          className="btnGhost"
-                          onClick={() => onReturn(a)}
-                        >
-                          Devolver
-                        </button>
-                      </div>
+                      <button type="button" className="btnGhost" onClick={() => onReturn(a)}>
+                        Devolver 1
+                      </button>
                     </div>
                   </div>
                 );
@@ -307,7 +272,6 @@ export default function AsignarHerramientas() {
               {filteredTools.map((t) => {
                 const avail = availableCount(t);
                 const level = avail === 0 ? "warn" : "ok";
-                const qv = qtyDraft[t.id] || "";
                 return (
                   <div className="tRow" key={t.id}>
                     <div className="cellMain">
@@ -330,29 +294,14 @@ export default function AsignarHerramientas() {
                     </div>
 
                     <div className="cell colActions">
-                      <div className="assignBox">
-                        <input
-                          className="qtyInput"
-                          inputMode="numeric"
-                          value={qv}
-                          onChange={(e) =>
-                            setQtyDraft((prev) => ({
-                              ...prev,
-                              [t.id]: e.target.value,
-                            }))
-                          }
-                          placeholder="1"
-                          aria-label="Cantidad a asignar"
-                        />
-                        <button
-                          type="button"
-                          className={avail === 0 ? "btnGhost" : "btn"}
-                          disabled={avail === 0}
-                          onClick={() => onAssign(t)}
-                        >
-                          Asignar
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        className={avail === 0 ? "btnGhost" : "btn"}
+                        disabled={avail === 0}
+                        onClick={() => onAssign(t)}
+                      >
+                        Asignar 1
+                      </button>
                     </div>
                   </div>
                 );

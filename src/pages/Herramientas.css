@@ -98,7 +98,15 @@
   padding: 14px;
   align-items:center;
   border-bottom: 1px solid rgba(42,58,99,.35);
+  cursor: pointer;
 }
+
+.toolsRow:focus{
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(240,180,41,.12);
+}
+
+.toolsRow.isOpen{ background: rgba(255,255,255,.02); }
 
 .toolsRow:last-child{ border-bottom:none; }
 
@@ -143,6 +151,70 @@
 
 .onlySm{ display:none; }
 
+.toolDetails{
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(42,58,99,.35);
+  display:grid;
+  gap: 10px;
+}
+
+.detailGrid{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+
+.detailPill{
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(42,58,99,.45);
+  background: rgba(255,255,255,.03);
+  display:flex;
+  justify-content:space-between;
+  gap: 10px;
+}
+
+.detailLabel{ color: var(--muted); font-size: 12px; }
+.detailValue{ font-weight: 900; }
+
+.detailNotes{
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(42,58,99,.45);
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+}
+
+.whoBlock{ display:grid; gap: 10px; }
+.whoTitle{ font-weight: 900; letter-spacing: .2px; }
+.whoEmpty{ color: var(--muted); }
+
+.whoList{ display:grid; gap: 10px; }
+
+.whoRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(42,58,99,.45);
+  background: rgba(255,255,255,.03);
+}
+
+.whoMain{ min-width: 0; }
+.whoName{ font-weight: 800; letter-spacing: .2px; }
+.whoMeta{ margin-top: 2px; color: var(--muted); font-size: 12px; display:flex; gap: 8px; align-items:center; flex-wrap: wrap; }
+
+.whoQty{
+  display:inline-flex;
+  min-width: 44px;
+  justify-content:center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(61,152,255,.32);
+  background: rgba(61,152,255,.10);
+  font-weight: 900;
+}
+
 @media (max-width: 900px){
   .toolsHeader{ flex-direction:column; }
   .toolsStats{ justify-content:flex-start; }
@@ -156,6 +228,8 @@
   .hideSm{ display:none; }
   .onlySm{ display:inline; }
   .colNum, .colActions{ justify-self: start; }
+
+  .detailGrid{ grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 420px){
