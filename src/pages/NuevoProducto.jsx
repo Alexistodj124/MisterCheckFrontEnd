@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useInventory } from "../store/inventoryStore";
 import "./NuevoProducto.css";
@@ -26,7 +26,7 @@ export default function NuevoProducto() {
 
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
-  const [category, setCategory] = useState(categories[0] || "");
+  const [category, setCategory] = useState(() => categories[0] || "");
   const [cost, setCost] = useState("");
   const [stock, setStock] = useState("");
   const [notes, setNotes] = useState("");
@@ -35,10 +35,6 @@ export default function NuevoProducto() {
   const [imageDataUrl, setImageDataUrl] = useState("");
 
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!category && categories.length > 0) setCategory(categories[0]);
-  }, [category, categories]);
 
   const onPickFile = (file) => {
     setError("");

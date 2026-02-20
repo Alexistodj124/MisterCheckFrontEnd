@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
+import { useState } from "react";
 import "./AppLayout.css";
 
 const links = [
@@ -14,11 +14,6 @@ const links = [
 
 export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [location.pathname]);
 
   return (
     <div className="appShell">

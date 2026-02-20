@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useInventory } from "../store/inventoryStore";
 import { useClients } from "../store/clientStore";
+import { useQuotes } from "../store/quoteStore";
 import "./CotizacionNueva.css";
 
 function createRowId() {
@@ -18,6 +19,7 @@ function toMoney(n) {
 export default function CotizacionNueva() {
   const { products } = useInventory();
   const { clients, addClient } = useClients();
+  const { addQuote } = useQuotes();
 
   const [clientName, setClientName] = useState("");
   const [projectDesc, setProjectDesc] = useState("");
@@ -33,6 +35,7 @@ export default function CotizacionNueva() {
 
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [savedQuote, setSavedQuote] = useState(null);
 
   const productById = useMemo(() => {
     const map = new Map();
@@ -55,6 +58,7 @@ export default function CotizacionNueva() {
 
   const addRow = () => {
     setSaved(false);
+    setSavedQuote(null);
     if (products.length === 0) {
       setError("No hay productos en inventario. Agrega productos primero.");
       return;
@@ -67,11 +71,13 @@ export default function CotizacionNueva() {
 
   const removeRow = (id) => {
     setSaved(false);
+    setSavedQuote(null);
     setRows((prev) => prev.filter((r) => r.id !== id));
   };
 
   const updateRow = (id, patch) => {
     setSaved(false);
+    setSavedQuote(null);
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   };
 
@@ -84,6 +90,7 @@ export default function CotizacionNueva() {
     e.preventDefault();
     setError("");
     setSaved(false);
+    setSavedQuote(null);
 
     const c = clientName.trim();
     const d = projectDesc.trim();
@@ -106,6 +113,25 @@ export default function CotizacionNueva() {
         return setError("Todas las cantidades deben ser mayores a 0.");
     }
 
+    const items = rows.map((r) => {
+      const p = productById.get(r.productId);
+      return {
+        productId: r.productId,
+        name: String(p?.name || ""),
+        unitCost: Number(p?.cost) || 0,
+        qty: Number(r.qty) || 0,
+      };
+    });
+
+    const created = addQuote({
+      clientName: c,
+      projectDesc: d,
+      deliveryDays: days,
+      projectPrice: proj,
+      items,
+    });
+
+    setSavedQuote(created);
     setSaved(true);
   };
 
@@ -284,7 +310,8 @@ export default function CotizacionNueva() {
           {error ? <div className="error">{error}</div> : null}
           {saved ? (
             <div className="success">
-              Cotizacion lista. (Por ahora no se guarda en BDD.)
+              Cotizacion creada{savedQuote?.number ? ` (#${savedQuote.number})` : ""}. Se
+              guardo en este navegador.
             </div>
           ) : null}
 
@@ -301,6 +328,7 @@ export default function CotizacionNueva() {
                 setRows(first ? [{ id: createRowId(), productId: first, qty: 1 }] : []);
                 setError("");
                 setSaved(false);
+                setSavedQuote(null);
               }}
             >
               Limpiar
