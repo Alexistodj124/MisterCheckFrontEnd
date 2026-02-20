@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTools } from "../store/toolStore";
+import { useWorkers } from "../store/workerStore";
 import "./Herramientas.css";
 
 function normalize(s) {
@@ -46,6 +47,7 @@ function Modal({ open, title, children, onClose }) {
 
 export default function Herramientas() {
   const { tools, addTool, updateTool } = useTools();
+  const { workers, addWorker, removeWorker } = useWorkers();
 
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
@@ -62,16 +64,23 @@ export default function Herramientas() {
   });
   const [error, setError] = useState("");
 
+  const [workersModalOpen, setWorkersModalOpen] = useState(false);
+  const [addWorkerModalOpen, setAddWorkerModalOpen] = useState(false);
+  const [workerForm, setWorkerForm] = useState({ name: "", role: "" });
+  const [workerError, setWorkerError] = useState("");
+
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== "Escape") return;
       setModalOpen(false);
+      setWorkersModalOpen(false);
+      setAddWorkerModalOpen(false);
     };
-    if (modalOpen) {
+    if (modalOpen || workersModalOpen || addWorkerModalOpen) {
       window.addEventListener("keydown", onKey);
       return () => window.removeEventListener("keydown", onKey);
     }
-  }, [modalOpen]);
+  }, [modalOpen, workersModalOpen, addWorkerModalOpen]);
 
   const categories = useMemo(() => {
     const set = new Set(tools.map((t) => t.category).filter(Boolean));
@@ -120,6 +129,29 @@ export default function Herramientas() {
     setEditingId(null);
     setForm({ name: "", category: "", stock: "0", inUse: "0", notes: "" });
     setModalOpen(true);
+  };
+
+  const openWorkers = () => {
+    setWorkerError("");
+    setWorkersModalOpen(true);
+  };
+
+  const openAddWorker = () => {
+    setWorkerError("");
+    setWorkerForm({ name: "", role: "" });
+    setAddWorkerModalOpen(true);
+  };
+
+  const onSaveWorker = (e) => {
+    e.preventDefault();
+    setWorkerError("");
+    const name = String(workerForm.name || "").trim();
+    const role = String(workerForm.role || "").trim();
+    if (!name) return setWorkerError("El nombre es requerido.");
+
+    const created = addWorker({ name, role });
+    if (!created) return setWorkerError("Ese trabajador ya existe.");
+    setAddWorkerModalOpen(false);
   };
 
   const openEdit = (t) => {
@@ -193,6 +225,9 @@ export default function Herramientas() {
           </div>
 
           <div className="toolsActions">
+            <button type="button" className="btnGhost" onClick={openWorkers}>
+              Trabajadores
+            </button>
             <button type="button" className="btn" onClick={openAdd}>
               Agregar herramienta
             </button>
@@ -395,6 +430,96 @@ export default function Herramientas() {
 
           <div className="modalActions">
             <button type="button" className="btnGhost" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={workersModalOpen}
+        title="Trabajadores"
+        onClose={() => setWorkersModalOpen(false)}
+      >
+        <div className="modalBody">
+          <div className="workersTop">
+            <div className="workersHint">Total: {workers.length}</div>
+            <button type="button" className="btn" onClick={openAddWorker}>
+              Agregar trabajador
+            </button>
+          </div>
+
+          {workers.length === 0 ? (
+            <div className="workersEmpty">No hay trabajadores registrados.</div>
+          ) : (
+            <div className="workersList" role="list" aria-label="Lista de trabajadores">
+              {workers
+                .slice()
+                .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+                .map((w) => (
+                  <div className="workerRow" key={w.id} role="listitem">
+                    <div className="workerMain">
+                      <div className="workerName">{w.name}</div>
+                      <div className="workerRole">{w.role || "(Sin rol)"}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btnGhost btnDangerSoft"
+                      onClick={() => removeWorker(w.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          <div className="modalActions">
+            <button type="button" className="btnGhost" onClick={() => setWorkersModalOpen(false)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={addWorkerModalOpen}
+        title="Agregar trabajador"
+        onClose={() => setAddWorkerModalOpen(false)}
+      >
+        <form className="modalBody" onSubmit={onSaveWorker}>
+          <label className="modalField">
+            <span className="modalLabel">Nombre</span>
+            <input
+              className="modalInput"
+              value={workerForm.name}
+              onChange={(e) => setWorkerForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Ej: Pedro Ramirez"
+              autoFocus
+            />
+          </label>
+
+          <label className="modalField">
+            <span className="modalLabel">Rol (opcional)</span>
+            <input
+              className="modalInput"
+              value={workerForm.role}
+              onChange={(e) => setWorkerForm((p) => ({ ...p, role: e.target.value }))}
+              placeholder="Ej: Tecnico"
+            />
+          </label>
+
+          {workerError ? <div className="error">{workerError}</div> : null}
+
+          <div className="modalActions">
+            <button
+              type="button"
+              className="btnGhost"
+              onClick={() => setAddWorkerModalOpen(false)}
+            >
               Cancelar
             </button>
             <button type="submit" className="btn">

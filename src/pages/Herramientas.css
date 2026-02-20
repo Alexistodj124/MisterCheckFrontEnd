@@ -248,6 +248,34 @@
   padding: 10px 12px;
 }
 
+.btnDangerSoft{
+  border-color: rgba(255,106,106,.30);
+  background: rgba(255,106,106,.08);
+}
+
+.btnDangerSoft:hover{ background: rgba(255,106,106,.12); }
+
+.workersTop{ display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap: wrap; }
+.workersHint{ color: var(--muted); font-size: 12px; }
+.workersEmpty{ color: var(--muted); padding: 4px 0; }
+
+.workersList{ display:grid; gap: 10px; }
+
+.workerRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(42,58,99,.45);
+  background: rgba(255,255,255,.03);
+}
+
+.workerMain{ min-width: 0; }
+.workerName{ font-weight: 800; letter-spacing: .2px; }
+.workerRole{ margin-top: 2px; color: var(--muted); font-size: 12px; }
+
 @media (max-width: 640px){
   .modalGrid2{ grid-template-columns: 1fr; }
 }
