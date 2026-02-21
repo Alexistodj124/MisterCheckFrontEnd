@@ -10,12 +10,14 @@ import Configuracion from "./pages/Configuracion";
 import Reportes from "./pages/Reportes";
 import Herramientas from "./pages/Herramientas";
 import AsignarHerramientas from "./pages/AsignarHerramientas";
+import Agenda from "./pages/Agenda";
 import { InventoryProvider } from "./store/inventoryStore";
 import { ClientProvider } from "./store/clientStore";
 import { QuoteProvider } from "./store/quoteStore";
 import { ToolProvider } from "./store/toolStore";
 import { WorkerProvider } from "./store/workerStore";
 import { AssignmentProvider } from "./store/assignmentStore";
+import { AgendaProvider } from "./store/agendaStore";
 
 export default function App() {
   return (
@@ -25,6 +27,7 @@ export default function App() {
           <ToolProvider>
             <WorkerProvider>
               <AssignmentProvider>
+                <AgendaProvider>
                 <BrowserRouter>
                   <Routes>
                     <Route element={<AppLayout />}>
@@ -43,10 +46,12 @@ export default function App() {
                         path="/herramientas/asignar"
                         element={<AsignarHerramientas />}
                       />
+                      <Route path="/agenda" element={<Agenda />} />
                       <Route path="/configuracion" element={<Configuracion />} />
                     </Route>
                   </Routes>
                 </BrowserRouter>
+                </AgendaProvider>
               </AssignmentProvider>
             </WorkerProvider>
           </ToolProvider>

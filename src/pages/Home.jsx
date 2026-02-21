@@ -16,6 +16,11 @@ const items = [
   { to: "/clientes", title: "Clientes", desc: "Alta, edicion y consulta rapida." },
   { to: "/reportes", title: "Reportes", desc: "Resumenes y exportaciones." },
   {
+    to: "/agenda",
+    title: "Agenda",
+    desc: "Calendario semanal de actividades.",
+  },
+  {
     to: "/herramientas",
     title: "Herramientas",
     desc: "Stock, disponibles y herramientas en uso.",
