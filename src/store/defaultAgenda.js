@@ -5,6 +5,7 @@ export const defaultAgendaEvents = [
     weekday: 0,
     start: "09:00",
     end: "10:30",
+    category: "general",
     tone: "accent",
   },
   {
@@ -13,6 +14,7 @@ export const defaultAgendaEvents = [
     weekday: 0,
     start: "11:00",
     end: "11:45",
+    category: "general",
     tone: "blue",
   },
   {
@@ -21,6 +23,7 @@ export const defaultAgendaEvents = [
     weekday: 1,
     start: "08:00",
     end: "10:00",
+    category: "proyecto",
     tone: "accent",
   },
   {
@@ -29,6 +32,7 @@ export const defaultAgendaEvents = [
     weekday: 2,
     start: "14:00",
     end: "15:30",
+    category: "cotizacion",
     tone: "blue",
   },
   {
@@ -37,6 +41,7 @@ export const defaultAgendaEvents = [
     weekday: 3,
     start: "16:00",
     end: "17:00",
+    category: "general",
     tone: "gray",
   },
   {
@@ -45,6 +50,7 @@ export const defaultAgendaEvents = [
     weekday: 4,
     start: "10:30",
     end: "11:30",
+    category: "proyecto",
     tone: "accent",
   },
 ];

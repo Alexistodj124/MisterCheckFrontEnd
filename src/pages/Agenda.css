@@ -122,12 +122,67 @@
 
 .evtTitle{ font-weight: 800; letter-spacing: .1px; }
 .evtTime{ margin-top: 6px; color: var(--muted); font-size: 12px; }
+.evtWorker{ color: rgba(233,238,252,.85); }
 
 .agHint{
   padding: 10px 12px;
   color: rgba(183,194,230,.85);
   font-size: 12px;
   border-top: 1px solid rgba(42,58,99,.35);
+}
+
+.agModal{
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 18px;
+}
+
+.agModalOverlay{
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 0;
+  background: rgba(5,8,16,.55);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: blur(12px) saturate(1.1);
+}
+
+.agModalCard{
+  position: relative;
+  z-index: 1;
+  width: min(560px, calc(100% - 8px));
+  max-height: calc(100vh - 52px);
+  border-radius: 18px;
+  border: 1px solid rgba(42,58,99,.60);
+  background: rgba(9,14,28,.92);
+  box-shadow: 0 22px 70px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+
+.agModalBody{ padding: 14px; display:grid; gap: 12px; overflow:auto; }
+
+.agModalTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(42,58,99,.45);
+}
+
+.agModalTitle{ font-weight: 800; letter-spacing: .1px; }
+.agModalSub{ margin-top: 4px; color: var(--muted); font-size: 12px; }
+
+.agRow3{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.agWorkerRow{ display:flex; gap: 10px; align-items:flex-end; flex-wrap: wrap; }
+.agWorkerGrow{ flex: 1 1 320px; }
+
+@media (max-width: 680px){
+  .agRow3{ grid-template-columns: 1fr; }
 }
 
 @media (max-width: 560px){

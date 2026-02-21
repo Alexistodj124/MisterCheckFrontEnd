@@ -39,10 +39,16 @@ export function AgendaProvider({ children }) {
       const next = {
         id: createId(),
         title: String(draft?.title || "").trim(),
-        weekday: Number(draft?.weekday) || 0,
+        weekday:
+          typeof draft?.weekday === "number" || typeof draft?.weekday === "string"
+            ? Number(draft.weekday)
+            : 0,
+        date: typeof draft?.date === "string" ? draft.date.trim() : "",
         start: String(draft?.start || "09:00").trim(),
         end: String(draft?.end || "10:00").trim(),
         tone: String(draft?.tone || "blue").trim(),
+        workerId: typeof draft?.workerId === "string" ? draft.workerId.trim() : "",
+        category: typeof draft?.category === "string" ? draft.category.trim() : "",
       };
       setEvents((prev) => [next, ...prev]);
       return next;
