@@ -10,6 +10,24 @@ const HOUR_HEIGHT = 64;
 
 const dayNames = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 
+const agendaCategories = [
+  { value: "all", label: "Todas" },
+  { value: "proyecto", label: "Visita de proyecto" },
+  { value: "cotizacion", label: "Visita de cotizacion" },
+  { value: "general", label: "General" },
+];
+
+function categoryToTone(cat) {
+  if (cat === "proyecto") return "accent";
+  if (cat === "cotizacion") return "blue";
+  return "gray";
+}
+
+function categoryLabel(cat) {
+  const found = agendaCategories.find((c) => c.value === cat);
+  return found ? found.label : "General";
+}
+
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
@@ -59,6 +77,9 @@ export default function Agenda() {
   const { workers, addWorker } = useWorkers();
   const [weekOffset, setWeekOffset] = useState(0);
 
+  const [filterWorkerId, setFilterWorkerId] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+
   const [assignOpen, setAssignOpen] = useState(false);
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
 
@@ -67,6 +88,7 @@ export default function Agenda() {
   const [aStart, setAStart] = useState("09:00");
   const [aEnd, setAEnd] = useState("10:00");
   const [aWorkerId, setAWorkerId] = useState(workers[0]?.id || "");
+  const [aCategory, setACategory] = useState("proyecto");
 
   const [wName, setWName] = useState("");
   const [wRole, setWRole] = useState("");
@@ -142,6 +164,25 @@ export default function Agenda() {
     return map;
   }, [workers]);
 
+  const matchesFilters = (e) => {
+    const workerId = typeof e?.workerId === "string" ? e.workerId.trim() : "";
+    const category = typeof e?.category === "string" && e.category.trim() ? e.category.trim() : "general";
+
+    if (filterWorkerId !== "all") {
+      if (filterWorkerId === "unassigned") {
+        if (workerId) return false;
+      } else {
+        if (workerId !== filterWorkerId) return false;
+      }
+    }
+
+    if (filterCategory !== "all") {
+      if (category !== filterCategory) return false;
+    }
+
+    return true;
+  };
+
   useEffect(() => {
     if (!aWorkerId && workers.length > 0) setAWorkerId(workers[0].id);
   }, [aWorkerId, workers]);
@@ -179,6 +220,7 @@ export default function Agenda() {
     setAStart("09:00");
     setAEnd("10:00");
     setAWorkerId(workers[0]?.id || "");
+    setACategory("proyecto");
     setAssignOpen(true);
   };
 
@@ -207,7 +249,8 @@ export default function Agenda() {
       date,
       start,
       end,
-      tone: "accent",
+      category: aCategory,
+      tone: categoryToTone(aCategory),
       workerId,
     });
 
@@ -255,6 +298,51 @@ export default function Agenda() {
         </div>
       </header>
 
+      <div className="agFilters">
+        <label className="agControl">
+          <span className="agControlLabel">Trabajador</span>
+          <select
+            className="agControlField"
+            value={filterWorkerId}
+            onChange={(e) => setFilterWorkerId(e.target.value)}
+          >
+            <option value="all">Todos</option>
+            <option value="unassigned">Sin asignar</option>
+            {workers.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}{w.role ? ` (${w.role})` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="agControl">
+          <span className="agControlLabel">Categoria</span>
+          <select
+            className="agControlField"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          >
+            {agendaCategories.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="button"
+          className="btnGhost"
+          onClick={() => {
+            setFilterWorkerId("all");
+            setFilterCategory("all");
+          }}
+        >
+          Limpiar
+        </button>
+      </div>
+
       <div className="agCard">
         <div className="calWrap" role="region" aria-label="Calendario semanal">
           <div className="cal" style={{ minWidth: 980 }}>
@@ -291,7 +379,7 @@ export default function Agenda() {
                       const dateKey = toISODateLocal(days[i]);
                       const dated = eventsByDate.get(dateKey) || [];
                       const recurring = eventsByWeekday[i] || [];
-                      return [...dated, ...recurring];
+                      return [...dated, ...recurring].filter(matchesFilters);
                     })().map((e) => {
                       const startMin = parseTimeToMinutes(e.start);
                       const endMin = parseTimeToMinutes(e.end);
@@ -323,6 +411,13 @@ export default function Agenda() {
                                 · {workerById.get(e.workerId)?.name || "Trabajador"}
                               </span>
                             ) : null}
+                          </div>
+                          <div className="evtTag">
+                            {categoryLabel(
+                              typeof e?.category === "string" && e.category.trim()
+                                ? e.category.trim()
+                                : "general"
+                            )}
                           </div>
                         </div>
                       );
@@ -412,6 +507,19 @@ export default function Agenda() {
                     />
                   </label>
                 </div>
+
+                <label className="field">
+                  <span className="fieldLabel">Categoria</span>
+                  <select
+                    className="fieldInput"
+                    value={aCategory}
+                    onChange={(e) => setACategory(e.target.value)}
+                  >
+                    <option value="proyecto">Visita de proyecto</option>
+                    <option value="cotizacion">Visita de cotizacion</option>
+                    <option value="general">General</option>
+                  </select>
+                </label>
 
                 <div className="agWorkerRow">
                   <label className="field agWorkerGrow">

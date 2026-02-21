@@ -18,6 +18,36 @@
 .agSubtitle{ margin:0; color: var(--muted); }
 .agActions{ display:flex; gap: 10px; flex-wrap: wrap; justify-content:flex-end; }
 
+.agFilters{
+  display:flex;
+  gap: 12px;
+  align-items:flex-end;
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.03);
+  margin: 0 0 14px;
+}
+
+.agControl{ display:flex; flex-direction:column; gap: 6px; min-width: 230px; }
+.agControlLabel{ font-size: 12px; color: var(--muted); letter-spacing: .2px; }
+
+.agControlField{
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: rgba(15,26,50,.55);
+  color: var(--text);
+  outline: none;
+}
+
+.agControlField:focus{
+  border-color: rgba(240,180,41,.35);
+  box-shadow: 0 0 0 4px rgba(240,180,41,.12);
+}
+
 .agCard{
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
@@ -124,6 +154,18 @@
 .evtTime{ margin-top: 6px; color: var(--muted); font-size: 12px; }
 .evtWorker{ color: rgba(233,238,252,.85); }
 
+.evtTag{
+  margin-top: 6px;
+  display:inline-flex;
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(42,58,99,.45);
+  background: rgba(255,255,255,.04);
+  color: rgba(233,238,252,.9);
+  font-size: 11px;
+}
+
 .agHint{
   padding: 10px 12px;
   color: rgba(183,194,230,.85);
@@ -183,6 +225,10 @@
 
 @media (max-width: 680px){
   .agRow3{ grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px){
+  .agControl{ min-width: 100%; }
 }
 
 @media (max-width: 560px){
