@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useState } from "react";
 import "./AppLayout.css";
+import { useAuth } from "../auth/AuthProvider";
 
 const links = [
   { to: "/", label: "Inicio" },
@@ -17,6 +18,7 @@ const links = [
 
 export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isAuthenticated, auth, login, logout } = useAuth();
 
   return (
     <div className="appShell">
@@ -25,6 +27,18 @@ export default function AppLayout() {
           <div className="brand">
             <span className="brandMark" aria-hidden="true" />
             <span className="brandText">MisterCheck</span>
+          </div>
+
+          <div className="topbarAuth" style={{ marginLeft: "auto", marginRight: 12 }}>
+            {isAuthenticated ? (
+              <button type="button" className="btnGhost" onClick={logout}>
+                Cerrar sesion{auth?.email ? ` (${auth.email})` : ""}
+              </button>
+            ) : (
+              <button type="button" className="btn" onClick={login}>
+                Iniciar sesion
+              </button>
+            )}
           </div>
 
           <button
