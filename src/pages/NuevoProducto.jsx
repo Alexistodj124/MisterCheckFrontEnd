@@ -35,6 +35,7 @@ export default function NuevoProducto() {
   const [imageDataUrl, setImageDataUrl] = useState("");
 
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const onPickFile = (file) => {
     setError("");
@@ -62,7 +63,7 @@ export default function NuevoProducto() {
     reader.readAsDataURL(file);
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -76,17 +77,23 @@ export default function NuevoProducto() {
     if (!Number.isFinite(co) || co < 0) return setError("Costo invalido.");
     if (!Number.isFinite(s) || s < 0) return setError("Cantidad/stock invalido.");
 
-    addProduct({
-      name: n,
-      sku: sku.trim(),
-      category: c,
-      cost: co,
-      stock: Math.floor(s),
-      imageDataUrl,
-      notes: notes.trim(),
-    });
-
-    navigate("/inventario");
+    setSaving(true);
+    try {
+      await addProduct({
+        name: n,
+        sku: sku.trim(),
+        category: c,
+        cost: co,
+        stock: Math.floor(s),
+        imageDataUrl,
+        notes: notes.trim(),
+      });
+      navigate("/inventario");
+    } catch (err) {
+      setError(String(err?.message || "No se pudo guardar el producto."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -95,7 +102,7 @@ export default function NuevoProducto() {
         <div>
           <h1 className="npTitle">Agregar producto</h1>
           <p className="npSubtitle">
-            Crea un nuevo producto (solo front-end por ahora).
+            Crea un nuevo producto en el sistema.
           </p>
         </div>
 
@@ -250,7 +257,7 @@ export default function NuevoProducto() {
               Cancelar
             </Link>
             <button type="submit" className="btn">
-              Guardar producto
+              {saving ? "Guardando..." : "Guardar producto"}
             </button>
           </div>
         </form>

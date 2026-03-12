@@ -4,13 +4,6 @@ import { useQuotes } from "../store/quoteStore";
 import "./Reportes.css";
 
 const MS_DAY = 86400000;
-const TODAY_STR = (() => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-})();
 
 function toMoney(n) {
   const x = Number(n);
@@ -54,12 +47,6 @@ function endOfDayMs(dateStr) {
   return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
 }
 
-function dateStrToIsoNoon(dateStr) {
-  if (!dateStr) return null;
-  const [y, m, d] = String(dateStr).split("-").map((v) => Number(v));
-  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
-  return new Date(y, m - 1, d, 12, 0, 0, 0).toISOString();
-}
 
 function Modal({ open, title, children, onClose }) {
   if (!open) return null;
@@ -154,14 +141,13 @@ function progressTone(q, nowMs) {
 }
 
 export default function Reportes() {
-  const { quotes, setQuoteStatus, updateQuote } = useQuotes();
+  const { quotes, setQuoteStatus, setQuoteProgress } = useQuotes();
   const [status, setStatus] = useState("all");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const [startModalId, setStartModalId] = useState(null);
-  const [startModalDate, setStartModalDate] = useState(TODAY_STR);
 
   const [progressModalId, setProgressModalId] = useState(null);
   const [progressModalPct, setProgressModalPct] = useState("0");
@@ -216,23 +202,17 @@ export default function Reportes() {
 
   const openStartModal = (q) => {
     setStartModalId(q.id);
-    setStartModalDate(TODAY_STR);
   };
 
-  const confirmStartPending = () => {
+  const confirmStartPending = async () => {
     if (!startModalId) return;
-    const iso = dateStrToIsoNoon(startModalDate);
-    if (!iso) return;
-    const nowIso = new Date().toISOString();
 
-    updateQuote(startModalId, {
-      status: "en_curso",
-      startedAt: iso,
-      progressPct: 0,
-      progressUpdatedAt: nowIso,
-    });
-
-    setStartModalId(null);
+    try {
+      await setQuoteStatus(startModalId, "en_curso");
+      setStartModalId(null);
+    } catch {
+      // ignore
+    }
   };
 
   const openProgressModal = (q) => {
@@ -240,14 +220,15 @@ export default function Reportes() {
     setProgressModalPct(String(clamp(q?.progressPct ?? 0, 0, 100)));
   };
 
-  const confirmProgress = () => {
+  const confirmProgress = async () => {
     if (!progressModalId) return;
     const pct = clamp(progressModalPct, 0, 100);
-    updateQuote(progressModalId, {
-      progressPct: pct,
-      progressUpdatedAt: new Date().toISOString(),
-    });
-    setProgressModalId(null);
+    try {
+      await setQuoteProgress(progressModalId, pct);
+      setProgressModalId(null);
+    } catch {
+      // ignore
+    }
   };
 
   return (
@@ -388,7 +369,10 @@ export default function Reportes() {
                       <select
                         className="statusSelect"
                         value={q.status}
-                        onChange={(e) => setQuoteStatus(q.id, e.target.value)}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setQuoteStatus(q.id, next).catch(() => {});
+                        }}
                         aria-label="Cambiar estado"
                       >
                         <option value="pendiente">Pendiente</option>
@@ -489,15 +473,9 @@ export default function Reportes() {
         onClose={() => setStartModalId(null)}
       >
         <div className="modalBody">
-          <label className="modalField">
-            <span className="modalLabel">Fecha de inicio</span>
-            <input
-              type="date"
-              className="modalInput"
-              value={startModalDate}
-              onChange={(e) => setStartModalDate(e.target.value)}
-            />
-          </label>
+          <div style={{ marginTop: 8 }}>
+            Esta accion marcara la cotizacion como <strong>En curso</strong>.
+          </div>
           <div className="modalActions">
             <button type="button" className="btnGhost" onClick={() => setStartModalId(null)}>
               Cancelar

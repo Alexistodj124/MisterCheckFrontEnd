@@ -73,10 +73,10 @@ export default function Herramientas() {
     name: "",
     category: "",
     stock: "0",
-    inUse: "0",
     notes: "",
   });
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [workersModalOpen, setWorkersModalOpen] = useState(false);
   const [addWorkerModalOpen, setAddWorkerModalOpen] = useState(false);
@@ -84,6 +84,11 @@ export default function Herramientas() {
   const [workerError, setWorkerError] = useState("");
 
   const [openToolId, setOpenToolId] = useState(null);
+
+  const editingTool = useMemo(() => {
+    if (!editingId) return null;
+    return tools.find((t) => t.id === editingId) || null;
+  }, [tools, editingId]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -164,7 +169,7 @@ export default function Herramientas() {
   const openAdd = () => {
     setError("");
     setEditingId(null);
-    setForm({ name: "", category: "", stock: "0", inUse: "0", notes: "" });
+    setForm({ name: "", category: "", stock: "0", notes: "" });
     setModalOpen(true);
   };
 
@@ -179,14 +184,14 @@ export default function Herramientas() {
     setAddWorkerModalOpen(true);
   };
 
-  const onSaveWorker = (e) => {
+  const onSaveWorker = async (e) => {
     e.preventDefault();
     setWorkerError("");
     const name = String(workerForm.name || "").trim();
     const role = String(workerForm.role || "").trim();
     if (!name) return setWorkerError("El nombre es requerido.");
 
-    const created = addWorker({ name, role });
+    const created = await addWorker({ name, role });
     if (!created) return setWorkerError("Ese trabajador ya existe.");
     setAddWorkerModalOpen(false);
   };
@@ -198,37 +203,39 @@ export default function Herramientas() {
       name: t.name || "",
       category: t.category || "",
       stock: String(t.stock ?? "0"),
-      inUse: String(t.inUse ?? "0"),
       notes: t.notes || "",
     });
     setModalOpen(true);
   };
 
-  const onSave = (e) => {
+  const onSave = async (e) => {
     e.preventDefault();
     setError("");
 
     const name = String(form.name || "").trim();
     const cat = String(form.category || "").trim();
     const stock = clampInt(form.stock, 0);
-    const inUse = clampInt(form.inUse, 0);
 
     if (!name) return setError("El nombre es requerido.");
     if (!cat) return setError("La categoria es requerida.");
-    if (inUse > stock) return setError("En uso no puede ser mayor al stock.");
 
     const payload = {
       name,
       category: cat,
       stock,
-      inUse,
       notes: String(form.notes || "").trim(),
     };
 
-    if (editingId) updateTool(editingId, payload);
-    else addTool(payload);
-
-    setModalOpen(false);
+    setSaving(true);
+    try {
+      if (editingId) await updateTool(editingId, payload);
+      else await addTool(payload);
+      setModalOpen(false);
+    } catch (err) {
+      setError(String(err?.message || "No se pudo guardar."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -511,21 +518,12 @@ export default function Herramientas() {
                 placeholder="0"
               />
             </label>
-
-            <label className="modalField">
-              <span className="modalLabel">En uso</span>
-              <input
-                className="modalInput"
-                value={form.inUse}
-                onChange={(e) => setForm((p) => ({ ...p, inUse: e.target.value }))}
-                inputMode="numeric"
-                placeholder="0"
-              />
-            </label>
           </div>
 
           <div className="modalHint">
-            Disponibles: {Math.max(0, clampInt(form.stock, 0) - clampInt(form.inUse, 0))}
+            En uso actual: {Math.min(Number(editingTool?.inUse) || 0, Number(editingTool?.stock) || 0)}
+            {" · "}
+            Disponibles: {Math.max(0, clampInt(form.stock, 0) - (Number(editingTool?.inUse) || 0))}
           </div>
 
           <label className="modalField">
@@ -545,8 +543,8 @@ export default function Herramientas() {
             <button type="button" className="btnGhost" onClick={() => setModalOpen(false)}>
               Cancelar
             </button>
-            <button type="submit" className="btn">
-              Guardar
+            <button type="submit" className="btn" disabled={saving}>
+              {saving ? "Guardando..." : "Guardar"}
             </button>
           </div>
         </form>
@@ -578,13 +576,19 @@ export default function Herramientas() {
                       <div className="workerName">{w.name}</div>
                       <div className="workerRole">{w.role || "(Sin rol)"}</div>
                     </div>
-                    <button
-                      type="button"
-                      className="btnGhost btnDangerSoft"
-                      onClick={() => removeWorker(w.id)}
-                    >
-                      Eliminar
-                    </button>
+                     <button
+                       type="button"
+                       className="btnGhost btnDangerSoft"
+                       onClick={async () => {
+                         try {
+                           await removeWorker(w.id);
+                         } catch {
+                           // ignore
+                         }
+                       }}
+                     >
+                       Eliminar
+                     </button>
                   </div>
                 ))}
             </div>

@@ -81,12 +81,16 @@ export default function CotizacionNueva() {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   };
 
-  const onSaveClient = () => {
-    const added = addClient(clientName);
-    if (added) setClientName(added.name);
+  const onSaveClient = async () => {
+    try {
+      const added = await addClient(clientName);
+      if (added) setClientName(added.name);
+    } catch {
+      // ignore
+    }
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSaved(false);
@@ -123,16 +127,19 @@ export default function CotizacionNueva() {
       };
     });
 
-    const created = addQuote({
-      clientName: c,
-      projectDesc: d,
-      deliveryDays: days,
-      projectPrice: proj,
-      items,
-    });
-
-    setSavedQuote(created);
-    setSaved(true);
+    try {
+      const created = await addQuote({
+        clientName: c,
+        projectDesc: d,
+        deliveryDays: days,
+        projectPrice: proj,
+        items,
+      });
+      setSavedQuote(created);
+      setSaved(true);
+    } catch (err) {
+      setError(String(err?.message || "No se pudo crear la cotizacion."));
+    }
   };
 
   return (
@@ -308,12 +315,12 @@ export default function CotizacionNueva() {
           )}
 
           {error ? <div className="error">{error}</div> : null}
-          {saved ? (
-            <div className="success">
-              Cotizacion creada{savedQuote?.number ? ` (#${savedQuote.number})` : ""}. Se
-              guardo en este navegador.
-            </div>
-          ) : null}
+            {saved ? (
+              <div className="success">
+                Cotizacion creada{savedQuote?.number ? ` (#${savedQuote.number})` : ""}. Se
+                guardo en el sistema.
+              </div>
+            ) : null}
 
           <div className="actions">
             <button

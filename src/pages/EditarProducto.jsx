@@ -19,6 +19,7 @@ export default function EditarProducto() {
   const [cost, setCost] = useState(String(product?.cost ?? ""));
 
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   if (!product) {
     return (
@@ -32,7 +33,7 @@ export default function EditarProducto() {
     );
   }
 
-  const onSave = (e) => {
+  const onSave = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -46,13 +47,20 @@ export default function EditarProducto() {
     if (!Number.isFinite(co) || co < 0) return setError("Costo invalido.");
     if (!Number.isFinite(s) || s < 0) return setError("Stock invalido.");
 
-    updateProduct(product.id, {
-      name: n,
-      category: c,
-      cost: co,
-      stock: Math.floor(s),
-    });
-    navigate("/inventario");
+    setSaving(true);
+    try {
+      await updateProduct(product.id, {
+        name: n,
+        category: c,
+        cost: co,
+        stock: Math.floor(s),
+      });
+      navigate("/inventario");
+    } catch (err) {
+      setError(String(err?.message || "No se pudo guardar el producto."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -124,7 +132,9 @@ export default function EditarProducto() {
 
         <div className="actions">
           <Link to="/inventario" className="btnGhost">Cancelar</Link>
-          <button type="submit" className="btn">Guardar</button>
+          <button type="submit" className="btn" disabled={saving}>
+            {saving ? "Guardando..." : "Guardar"}
+          </button>
         </div>
       </form>
     </section>

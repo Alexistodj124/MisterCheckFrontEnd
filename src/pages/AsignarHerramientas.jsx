@@ -30,7 +30,7 @@ function availableCount(t) {
 }
 
 export default function AsignarHerramientas() {
-  const { tools, updateTool } = useTools();
+  const { tools } = useTools();
   const { workers } = useWorkers();
   const { assignments, assignTool, unassignTool } = useAssignments();
 
@@ -88,7 +88,7 @@ export default function AsignarHerramientas() {
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
   }, [tools, toolCategory, query]);
 
-  const onAssign = (tool) => {
+  const onAssign = async (tool) => {
     setError("");
     if (!workerId) return setError("Selecciona un trabajador primero.");
 
@@ -96,12 +96,14 @@ export default function AsignarHerramientas() {
     const qty = 1;
     if (qty > avail) return setError("No hay suficientes disponibles para asignar.");
 
-    const curInUse = Number(tool?.inUse) || 0;
-    updateTool(tool.id, { inUse: curInUse + qty });
-    assignTool({ workerId, toolId: tool.id, qty });
+    try {
+      await assignTool({ workerId, toolId: tool.id, qty });
+    } catch (e) {
+      setError(String(e?.message || "No se pudo asignar la herramienta."));
+    }
   };
 
-  const onReturn = (a) => {
+  const onReturn = async (a) => {
     setError("");
     const tool = toolById.get(a.toolId);
     if (!tool) return;
@@ -110,9 +112,11 @@ export default function AsignarHerramientas() {
     const qty = 1;
     if (qty > max) return setError("No puedes devolver mas de lo asignado.");
 
-    const curInUse = Number(tool?.inUse) || 0;
-    updateTool(tool.id, { inUse: Math.max(0, curInUse - qty) });
-    unassignTool({ workerId, toolId: tool.id, qty });
+    try {
+      await unassignTool({ workerId, toolId: tool.id, qty });
+    } catch (e) {
+      setError(String(e?.message || "No se pudo devolver la herramienta."));
+    }
   };
 
   return (

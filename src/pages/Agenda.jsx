@@ -184,10 +184,6 @@ export default function Agenda() {
   };
 
   useEffect(() => {
-    if (!aWorkerId && workers.length > 0) setAWorkerId(workers[0].id);
-  }, [aWorkerId, workers]);
-
-  useEffect(() => {
     if (!assignOpen && !workerModalOpen) return;
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -224,7 +220,7 @@ export default function Agenda() {
     setAssignOpen(true);
   };
 
-  const saveAssignment = (e) => {
+  const saveAssignment = async (e) => {
     e.preventDefault();
     setModalError("");
 
@@ -244,20 +240,24 @@ export default function Agenda() {
       return setModalError("Horario invalido.");
     if (em <= sm) return setModalError("La hora de fin debe ser mayor.");
 
-    addEvent({
-      title,
-      date,
-      start,
-      end,
-      category: aCategory,
-      tone: categoryToTone(aCategory),
-      workerId,
-    });
-
-    setAssignOpen(false);
+    try {
+      await addEvent({
+        title,
+        kind: "dated",
+        date,
+        start,
+        end,
+        category: aCategory,
+        tone: categoryToTone(aCategory),
+        workerId,
+      });
+      setAssignOpen(false);
+    } catch (err) {
+      setModalError(String(err?.message || "No se pudo guardar el evento."));
+    }
   };
 
-  const saveWorker = (e) => {
+  const saveWorker = async (e) => {
     e.preventDefault();
     setModalError("");
 
@@ -265,7 +265,7 @@ export default function Agenda() {
     const role = wRole.trim();
     if (!name) return setModalError("El nombre del trabajador es requerido.");
 
-    const created = addWorker({ name, role });
+    const created = await addWorker({ name, role });
     if (!created) return setModalError("No se pudo agregar (puede que ya exista).");
 
     setAWorkerId(created.id);
@@ -588,7 +588,7 @@ export default function Agenda() {
               <div className="agModalTop">
                 <div>
                   <div className="agModalTitle">Agregar trabajador</div>
-                  <div className="agModalSub">Se guarda solo en este navegador</div>
+                  <div className="agModalSub">Se guarda en el sistema</div>
                 </div>
                 <button
                   type="button"

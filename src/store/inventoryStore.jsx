@@ -1,72 +1,102 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { defaultProducts } from "./defaultProducts";
-
-const STORAGE_KEY = "mistercheck.inventory.v1";
-
-function createId() {
-  const ts = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 8);
-  return `p-${ts}-${rand}`;
-}
-
-function readInitialProducts() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProducts;
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return defaultProducts;
-    return parsed;
-  } catch {
-    return defaultProducts;
-  }
-}
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useAuth } from "../auth/AuthProvider";
+import { apiDelete, apiGet, apiPatch, apiPost } from "../api/http";
 
 const InventoryContext = createContext(null);
 
 export function InventoryProvider({ children }) {
-  const [products, setProducts] = useState(readInitialProducts);
+  const { isAuthenticated } = useAuth();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const refreshProducts = useCallback(async (params) => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await apiGet("/api/products", params);
+      setProducts(Array.isArray(data?.items) ? data.items : []);
+      return data;
+    } catch (e) {
+      setError(String(e?.message || "No se pudieron cargar los productos."));
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-    } catch {
-      // ignore storage write errors
+    if (!isAuthenticated) {
+      setProducts([]);
+      setError("");
+      setLoading(false);
+      return;
     }
-  }, [products]);
+    refreshProducts();
+  }, [isAuthenticated, refreshProducts]);
+
+  const addProduct = useCallback(async (draft) => {
+    setError("");
+    const payload = {
+      name: String(draft?.name || "").trim(),
+      sku: String(draft?.sku || "").trim(),
+      category: String(draft?.category || "").trim(),
+      cost: Number(draft?.cost) || 0,
+      stock: Math.floor(Number(draft?.stock) || 0),
+      imageDataUrl: typeof draft?.imageDataUrl === "string" ? draft.imageDataUrl : "",
+      notes: String(draft?.notes || "").trim(),
+    };
+
+    const created = await apiPost("/api/products", payload);
+    if (created && created.id) {
+      setProducts((prev) => [created, ...prev]);
+    } else {
+      await refreshProducts();
+    }
+    return created;
+  }, [refreshProducts]);
+
+  const updateProduct = useCallback(async (id, patch) => {
+    setError("");
+    const payload = { ...patch };
+    const updated = await apiPatch(`/api/products/${id}`, payload);
+    if (updated && updated.id) {
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } else {
+      await refreshProducts();
+    }
+    return updated;
+  }, [refreshProducts]);
+
+  const removeProduct = useCallback(async (id) => {
+    setError("");
+    await apiDelete(`/api/products/${id}`);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    return true;
+  }, []);
 
   const value = useMemo(() => {
-    const addProduct = (draft) => {
-      const next = {
-        id: createId(),
-        name: String(draft?.name || "").trim(),
-        sku: String(draft?.sku || "").trim(),
-        category: String(draft?.category || "").trim(),
-        cost: Number(draft?.cost) || 0,
-        stock: Number(draft?.stock) || 0,
-        imageDataUrl: typeof draft?.imageDataUrl === "string" ? draft.imageDataUrl : "",
-        notes: String(draft?.notes || "").trim(),
-      };
-
-      setProducts((prev) => [next, ...prev]);
-      return next;
+    return {
+      products,
+      setProducts,
+      loading,
+      error,
+      refreshProducts,
+      addProduct,
+      updateProduct,
+      removeProduct,
     };
+  }, [products, loading, error, refreshProducts, addProduct, updateProduct, removeProduct]);
 
-    const updateProduct = (id, patch) => {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...patch } : p))
-      );
-    };
-
-    return { products, setProducts, addProduct, updateProduct };
-  }, [products]);
-
-  return (
-    <InventoryContext.Provider value={value}>
-      {children}
-    </InventoryContext.Provider>
-  );
+  return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>;
 }
 
 export function useInventory() {

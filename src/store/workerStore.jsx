@@ -1,68 +1,99 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { defaultWorkers } from "./defaultWorkers";
-
-const STORAGE_KEY = "mistercheck.workers.v1";
-
-function createId() {
-  const ts = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 8);
-  return `w-${ts}-${rand}`;
-}
-
-function readInitialWorkers() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultWorkers;
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return defaultWorkers;
-    return parsed;
-  } catch {
-    return defaultWorkers;
-  }
-}
-
-function norm(s) {
-  return String(s || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useAuth } from "../auth/AuthProvider";
+import { apiDelete, apiGet, apiPatch, apiPost } from "../api/http";
 
 const WorkerContext = createContext(null);
 
 export function WorkerProvider({ children }) {
-  const [workers, setWorkers] = useState(readInitialWorkers);
+  const { isAuthenticated } = useAuth();
+  const [workers, setWorkers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const refreshWorkers = useCallback(async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await apiGet("/api/workers");
+      setWorkers(Array.isArray(data?.items) ? data.items : []);
+      return data;
+    } catch (e) {
+      setError(String(e?.message || "No se pudieron cargar los trabajadores."));
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(workers));
-    } catch {
-      // ignore storage write errors
+    if (!isAuthenticated) {
+      setWorkers([]);
+      setError("");
+      setLoading(false);
+      return;
     }
-  }, [workers]);
+    refreshWorkers();
+  }, [isAuthenticated, refreshWorkers]);
+
+  const addWorker = useCallback(async (draft) => {
+    setError("");
+    const name = String(draft?.name || "").trim();
+    const role = String(draft?.role || "").trim();
+    if (!name) return null;
+
+    try {
+      const created = await apiPost("/api/workers", { name, role });
+      if (created && created.id) {
+        setWorkers((prev) => [created, ...prev]);
+        return created;
+      }
+      await refreshWorkers();
+      return created;
+    } catch (e) {
+      if (Number(e?.status) === 409) return null;
+      setError(String(e?.message || "No se pudo crear el trabajador."));
+      return null;
+    }
+  }, [refreshWorkers]);
+
+  const updateWorker = useCallback(async (id, patch) => {
+    setError("");
+    const updated = await apiPatch(`/api/workers/${id}`, patch);
+    if (updated && updated.id) {
+      setWorkers((prev) => prev.map((w) => (w.id === id ? updated : w)));
+    } else {
+      await refreshWorkers();
+    }
+    return updated;
+  }, [refreshWorkers]);
+
+  const removeWorker = useCallback(async (id) => {
+    setError("");
+    await apiDelete(`/api/workers/${id}`);
+    setWorkers((prev) => prev.filter((w) => w.id !== id));
+    return true;
+  }, []);
 
   const value = useMemo(() => {
-    const addWorker = (draft) => {
-      const name = String(draft?.name || "").trim();
-      const role = String(draft?.role || "").trim();
-      if (!name) return null;
-
-      const exists = workers.some((w) => norm(w?.name) === norm(name));
-      if (exists) return null;
-
-      const next = { id: createId(), name, role };
-      setWorkers((prev) => [next, ...prev]);
-      return next;
+    return {
+      workers,
+      setWorkers,
+      loading,
+      error,
+      refreshWorkers,
+      addWorker,
+      updateWorker,
+      removeWorker,
     };
-
-    const removeWorker = (id) => {
-      setWorkers((prev) => prev.filter((w) => w.id !== id));
-    };
-
-    return { workers, setWorkers, addWorker, removeWorker };
-  }, [workers]);
+  }, [workers, loading, error, refreshWorkers, addWorker, updateWorker, removeWorker]);
 
   return <WorkerContext.Provider value={value}>{children}</WorkerContext.Provider>;
 }
