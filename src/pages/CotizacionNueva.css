@@ -102,6 +102,37 @@
   background: rgba(255,255,255,.03);
 }
 
+.productCell{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.productSummary{ min-width: 0; }
+
+.productName{
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.productMeta{
+  margin-top: 4px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.productPickerBtn{
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
+.dot{ width: 4px; height: 4px; border-radius: 999px; background: rgba(183,194,230,.55); }
+
 .cell{
   height: 42px;
   display:flex;
@@ -141,6 +172,113 @@
 
 .actions{ display:flex; gap: 10px; justify-content:flex-end; flex-wrap: wrap; }
 
+.pickerOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 14px;
+  background: rgba(5,8,16,.62);
+  backdrop-filter: blur(3px);
+}
+
+.pickerModal{
+  width: min(880px, 96vw);
+  max-height: min(760px, calc(100vh - 28px));
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--stroke);
+  background: rgba(9,14,28,.94);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display:grid;
+  gap: 14px;
+}
+
+.pickerTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.pickerTitle{
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+.pickerSubtitle{
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pickerControls{
+  display:grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+}
+
+.pickerSearch{ min-width: 0; }
+
+.pickerResults{
+  min-height: 220px;
+  max-height: 460px;
+  overflow: auto;
+  display:grid;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.pickerItem{
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(42,58,99,.45);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  padding: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pickerItem:hover{
+  border-color: rgba(240,180,41,.35);
+  background: rgba(240,180,41,.08);
+}
+
+.pickerItemMain,
+.pickerItemSide{
+  display:grid;
+  gap: 4px;
+}
+
+.pickerItemSide{
+  text-align: right;
+  justify-items: end;
+}
+
+.pickerItemName{ font-weight: 700; }
+
+.pickerItemMeta,
+.pickerItemCategory{
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pickerItemCost{ font-weight: 800; }
+
+.pickerEmpty{
+  border-radius: 16px;
+  border: 1px dashed rgba(42,58,99,.45);
+  background: rgba(255,255,255,.02);
+}
+
 .sr{
   position:absolute;
   width:1px;
@@ -163,6 +301,11 @@
   .row2{ grid-template-columns: 1fr; }
   .listHead{ display:none; }
   .listRow{ grid-template-columns: 1fr 110px 42px; align-items: start; }
+  .productCell{ align-items:flex-start; flex-direction: column; }
+  .productPickerBtn{ width: 100%; }
+  .pickerControls{ grid-template-columns: 1fr; }
+  .pickerItem{ align-items:flex-start; flex-direction: column; }
+  .pickerItemSide{ text-align: left; justify-items: start; }
   .hideSm{ display:none; }
   .onlySm{ display:block; }
   .rowMeta{ grid-column: 1 / -1; display:flex; gap: 14px; color: var(--muted); font-size: 12px; margin-top: -2px; }

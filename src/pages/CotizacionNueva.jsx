@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useInventory } from "../store/inventoryStore";
 import { useClients } from "../store/clientStore";
 import { useQuotes } from "../store/quoteStore";
@@ -16,6 +16,118 @@ function toMoney(n) {
   return x.toFixed(2);
 }
 
+function normalize(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function ProductPickerModal({
+  open,
+  products,
+  categories,
+  selectedCategory,
+  query,
+  onCategoryChange,
+  onQueryChange,
+  onSelect,
+  onClose,
+}) {
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="pickerOverlay" role="presentation" onClick={onClose}>
+      <div
+        className="pickerModal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Buscar producto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="pickerTop">
+          <div>
+            <div className="pickerTitle">Buscar producto</div>
+            <p className="pickerSubtitle">
+              Filtra por categoria, nombre o SKU para elegir mas rapido.
+            </p>
+          </div>
+
+          <button type="button" className="iconBtn" onClick={onClose} aria-label="Cerrar">
+            X
+          </button>
+        </div>
+
+        <div className="pickerControls">
+          <label className="field">
+            <span className="fieldLabel">Categoria</span>
+            <select
+              className="fieldInput"
+              value={selectedCategory}
+              onChange={(e) => onCategoryChange(e.target.value)}
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category === "all" ? "Todas" : category}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="field pickerSearch">
+            <span className="fieldLabel">Buscar</span>
+            <input
+              className="fieldInput"
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder="Nombre, SKU o categoria"
+              inputMode="search"
+              autoFocus
+            />
+          </label>
+        </div>
+
+        <div className="pickerResults" aria-label="Resultados de productos">
+          {products.length === 0 ? (
+            <div className="empty pickerEmpty">
+              No hay productos que coincidan con la busqueda.
+            </div>
+          ) : (
+            products.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                className="pickerItem"
+                onClick={() => onSelect(product.id)}
+              >
+                <div className="pickerItemMain">
+                  <span className="pickerItemName">{product.name}</span>
+                  <span className="pickerItemMeta">SKU: {product.sku || "-"}</span>
+                </div>
+                <div className="pickerItemSide">
+                  <span className="pickerItemCategory">{product.category || "Sin categoria"}</span>
+                  <span className="pickerItemCost">${toMoney(product.cost)}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CotizacionNueva() {
   const { products } = useInventory();
   const { clients, addClient } = useClients();
@@ -26,22 +138,36 @@ export default function CotizacionNueva() {
   const [deliveryDays, setDeliveryDays] = useState("7");
   const [projectPrice, setProjectPrice] = useState("0");
 
-  const [rows, setRows] = useState(() => {
-    const first = products[0]?.id || "";
-    return first
-      ? [{ id: createRowId(), productId: first, qty: 1 }]
-      : [];
-  });
+  const [rows, setRows] = useState([]);
 
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [savedQuote, setSavedQuote] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerRowId, setPickerRowId] = useState("");
+  const [pickerCategory, setPickerCategory] = useState("all");
+  const [pickerQuery, setPickerQuery] = useState("");
 
   const productById = useMemo(() => {
     const map = new Map();
     products.forEach((p) => map.set(p.id, p));
     return map;
   }, [products]);
+
+  const categories = useMemo(() => {
+    const set = new Set(products.map((p) => p.category).filter(Boolean));
+    return ["all", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    const q = normalize(pickerQuery);
+    return products
+      .filter((p) => (pickerCategory === "all" ? true : p.category === pickerCategory))
+      .filter((p) => {
+        if (!q) return true;
+        return normalize(`${p.name} ${p.sku} ${p.category}`).includes(q);
+      });
+  }, [products, pickerCategory, pickerQuery]);
 
   const totals = useMemo(() => {
     const itemsSubtotal = rows.reduce((sum, r) => {
@@ -56,17 +182,34 @@ export default function CotizacionNueva() {
     return { itemsSubtotal, project, total };
   }, [rows, productById, projectPrice]);
 
-  const addRow = () => {
+  const openPicker = (rowId = "") => {
     setSaved(false);
     setSavedQuote(null);
     if (products.length === 0) {
       setError("No hay productos en inventario. Agrega productos primero.");
       return;
     }
-    setRows((prev) => [
-      ...prev,
-      { id: createRowId(), productId: products[0].id, qty: 1 },
-    ]);
+    setError("");
+    setPickerRowId(rowId);
+    setPickerCategory("all");
+    setPickerQuery("");
+    setPickerOpen(true);
+  };
+
+  const closePicker = () => {
+    setPickerOpen(false);
+    setPickerRowId("");
+  };
+
+  const onSelectProduct = (productId) => {
+    setSaved(false);
+    setSavedQuote(null);
+    if (pickerRowId) {
+      setRows((prev) => prev.map((r) => (r.id === pickerRowId ? { ...r, productId } : r)));
+    } else {
+      setRows((prev) => [...prev, { id: createRowId(), productId, qty: 1 }]);
+    }
+    closePicker();
   };
 
   const removeRow = (id) => {
@@ -239,7 +382,7 @@ export default function CotizacionNueva() {
               <div className="qCardSub">Lista ilimitada con cantidad.</div>
             </div>
 
-            <button type="button" className="btn" onClick={addRow}>
+            <button type="button" className="btn" onClick={() => openPicker()}>
               Agregar producto
             </button>
           </div>
@@ -266,20 +409,24 @@ export default function CotizacionNueva() {
 
                 return (
                   <div className="listRow" key={r.id}>
-                    <label className="field">
-                      <span className="sr">Producto</span>
-                      <select
-                        className="fieldInput"
-                        value={r.productId}
-                        onChange={(e) => updateRow(r.id, { productId: e.target.value })}
+                    <div className="productCell">
+                      <div className="productSummary">
+                        <div className="productName">{p?.name || "Producto no disponible"}</div>
+                        <div className="productMeta">
+                          <span>SKU: {p?.sku || "-"}</span>
+                          <span className="dot" aria-hidden="true" />
+                          <span>{p?.category || "Sin categoria"}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btnGhost productPickerBtn"
+                        onClick={() => openPicker(r.id)}
                       >
-                        {products.map((p2) => (
-                          <option key={p2.id} value={p2.id}>
-                            {p2.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                        Cambiar
+                      </button>
+                    </div>
 
                     <div className="cell hideSm">{toMoney(cost)}</div>
 
@@ -331,11 +478,11 @@ export default function CotizacionNueva() {
                 setProjectDesc("");
                 setDeliveryDays("7");
                 setProjectPrice("0");
-                const first = products[0]?.id || "";
-                setRows(first ? [{ id: createRowId(), productId: first, qty: 1 }] : []);
+                setRows([]);
                 setError("");
                 setSaved(false);
                 setSavedQuote(null);
+                closePicker();
               }}
             >
               Limpiar
@@ -346,6 +493,18 @@ export default function CotizacionNueva() {
           </div>
         </div>
       </form>
+
+      <ProductPickerModal
+        open={pickerOpen}
+        products={filteredProducts}
+        categories={categories}
+        selectedCategory={pickerCategory}
+        query={pickerQuery}
+        onCategoryChange={setPickerCategory}
+        onQueryChange={setPickerQuery}
+        onSelect={onSelectProduct}
+        onClose={closePicker}
+      />
     </section>
   );
 }
