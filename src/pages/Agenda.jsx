@@ -55,6 +55,20 @@ function fmtDay(d) {
   return String(d.getDate());
 }
 
+function fmtDayMonth(d) {
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "2-digit",
+    month: "short",
+  }).format(d);
+}
+
+function fmtWeekRange(days) {
+  if (!Array.isArray(days) || days.length === 0) return "";
+  const first = days[0];
+  const last = days[days.length - 1];
+  return `${fmtDayMonth(first)} - ${fmtDayMonth(last)}`;
+}
+
 function parseTimeToMinutes(t) {
   const m = String(t || "").match(/^(\d{1,2}):(\d{2})$/);
   if (!m) return NaN;
@@ -66,6 +80,200 @@ function parseTimeToMinutes(t) {
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
+}
+
+function escapeXml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function wrapText(value, maxChars = 20) {
+  const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [""];
+
+  const lines = [];
+  let current = "";
+
+  words.forEach((word) => {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxChars || !current) {
+      current = next;
+      return;
+    }
+    lines.push(current);
+    current = word;
+  });
+
+  if (current) lines.push(current);
+  return lines.slice(0, 3);
+}
+
+function renderSvgText(lines, x, y, lineHeight, className) {
+  if (!Array.isArray(lines) || lines.length === 0) return "";
+  const tspans = lines
+    .map((line, index) => {
+      const dy = index === 0 ? 0 : lineHeight;
+      return `<tspan x="${x}" dy="${dy}">${escapeXml(line)}</tspan>`;
+    })
+    .join("");
+  return `<text x="${x}" y="${y}" class="${className}">${tspans}</text>`;
+}
+
+function buildScheduleImageSvg({ worker, weekLabel, days, eventsByDay }) {
+  const width = 1560;
+  const height = 980;
+  const headerHeight = 130;
+  const leftCol = 120;
+  const topGrid = 220;
+  const gridBottom = 900;
+  const gridHeight = gridBottom - topGrid;
+  const dayWidth = (width - leftCol - 56) / 7;
+  const pxPerMin = gridHeight / ((DAY_END_HOUR - DAY_START_HOUR) * 60);
+  const hourCount = DAY_END_HOUR - DAY_START_HOUR;
+  const hours = Array.from({ length: hourCount + 1 }, (_, i) => DAY_START_HOUR + i);
+
+  const palette = {
+    accent: { fill: "#f0b429", stroke: "#f7cf69", tag: "#6a4a00" },
+    blue: { fill: "#3d98ff", stroke: "#7bbcff", tag: "#0a3b70" },
+    gray: { fill: "#b7c2e6", stroke: "#d7dff5", tag: "#30415f" },
+  };
+
+  const bg = [
+    `<rect width="${width}" height="${height}" rx="32" fill="#09101d" />`,
+    `<rect width="${width}" height="${height}" rx="32" fill="url(#bgGlow)" opacity="0.9" />`,
+  ].join("");
+
+  const gridLines = hours
+    .map((hour, index) => {
+      const y = topGrid + index * (gridHeight / hourCount);
+      const label = `${String(hour).padStart(2, "0")}:00`;
+      return [
+        `<line x1="${leftCol}" y1="${y}" x2="${width - 28}" y2="${y}" stroke="rgba(183,194,230,.18)" />`,
+        `<text x="36" y="${y + 5}" class="hourLabel">${label}</text>`,
+      ].join("");
+    })
+    .join("");
+
+  const dayColumns = days
+    .map((day, index) => {
+      const x = leftCol + index * dayWidth;
+      const header = [
+        `<rect x="${x + 8}" y="${headerHeight + 22}" width="${dayWidth - 16}" height="70" rx="20" fill="rgba(255,255,255,.04)" stroke="rgba(183,194,230,.16)" />`,
+        `<text x="${x + 24}" y="${headerHeight + 50}" class="dayLabel">${escapeXml(dayNames[index])}</text>`,
+        `<text x="${x + 24}" y="${headerHeight + 78}" class="dateLabel">${escapeXml(fmtDayMonth(day))}</text>`,
+        `<line x1="${x}" y1="${topGrid}" x2="${x}" y2="${gridBottom}" stroke="rgba(183,194,230,.12)" />`,
+      ].join("");
+
+      const items = (eventsByDay[index] || [])
+        .map((event) => {
+          const startMin = parseTimeToMinutes(event.start);
+          const endMin = parseTimeToMinutes(event.end);
+          if (!Number.isFinite(startMin) || !Number.isFinite(endMin)) return "";
+
+          const dayStartMin = DAY_START_HOUR * 60;
+          const dayEndMin = DAY_END_HOUR * 60;
+          const s = clamp(startMin, dayStartMin, dayEndMin);
+          const en = clamp(endMin, dayStartMin, dayEndMin);
+          const dur = Math.max(35, en - s);
+          const y = topGrid + (s - dayStartMin) * pxPerMin;
+          const h = dur * pxPerMin;
+          const tone = palette[event.tone || "blue"] || palette.blue;
+          const titleLines = wrapText(event.title, 18);
+          const metaLabel = `${event.start} - ${event.end}`;
+
+          return [
+            `<rect x="${x + 10}" y="${y}" width="${dayWidth - 20}" height="${h}" rx="18" fill="${tone.fill}" fill-opacity="0.18" stroke="${tone.stroke}" stroke-opacity="0.95" />`,
+            renderSvgText(titleLines, x + 24, y + 28, 20, "eventTitle"),
+            `<text x="${x + 24}" y="${y + Math.min(h - 28, 92)}" class="eventMeta">${escapeXml(metaLabel)}</text>`,
+            `<rect x="${x + 24}" y="${y + h - 34}" width="122" height="22" rx="11" fill="${tone.tag}" fill-opacity="0.16" stroke="${tone.stroke}" stroke-opacity="0.55" />`,
+            `<text x="${x + 36}" y="${y + h - 19}" class="eventTag">${escapeXml(categoryLabel(event.category))}</text>`,
+          ].join("");
+        })
+        .join("");
+
+      return header + items;
+    })
+    .join("");
+
+  const empty = eventsByDay.every((items) => items.length === 0)
+    ? `<rect x="${leftCol + 18}" y="${topGrid + 140}" width="${width - leftCol - 54}" height="120" rx="24" fill="rgba(255,255,255,.03)" stroke="rgba(183,194,230,.14)" stroke-dasharray="8 8" />
+       <text x="${leftCol + 52}" y="${topGrid + 188}" class="emptyTitle">Sin actividades para esta semana</text>
+       <text x="${leftCol + 52}" y="${topGrid + 220}" class="emptyText">Puedes copiar esta imagen y compartirla como evidencia del horario del trabajador.</text>`
+    : "";
+
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <defs>
+        <linearGradient id="bgGlow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#173154" />
+          <stop offset="55%" stop-color="#0b1629" />
+          <stop offset="100%" stop-color="#102741" />
+        </linearGradient>
+        <style>
+          text { font-family: Arial, sans-serif; fill: #edf3ff; }
+          .title { font-size: 40px; font-weight: 700; }
+          .sub { font-size: 18px; fill: #b7c2e6; }
+          .worker { font-size: 24px; font-weight: 700; }
+          .dayLabel { font-size: 22px; font-weight: 700; }
+          .dateLabel { font-size: 16px; fill: #b7c2e6; }
+          .hourLabel { font-size: 16px; fill: #8ea0c4; }
+          .eventTitle { font-size: 19px; font-weight: 700; }
+          .eventMeta { font-size: 15px; fill: #dce6ff; }
+          .eventTag { font-size: 13px; fill: #edf3ff; font-weight: 600; }
+          .emptyTitle { font-size: 28px; font-weight: 700; }
+          .emptyText { font-size: 18px; fill: #b7c2e6; }
+        </style>
+      </defs>
+      ${bg}
+      <text x="42" y="64" class="title">Horario semanal</text>
+      <text x="42" y="98" class="sub">${escapeXml(weekLabel)}</text>
+      <text x="1260" y="62" text-anchor="end" class="worker">${escapeXml(worker?.name || "Trabajador")}</text>
+      <text x="1260" y="95" text-anchor="end" class="sub">${escapeXml(worker?.role || "Sin rol")}</text>
+      ${gridLines}
+      <line x1="${width - 28}" y1="${topGrid}" x2="${width - 28}" y2="${gridBottom}" stroke="rgba(183,194,230,.12)" />
+      ${dayColumns}
+      ${empty}
+    </svg>
+  `;
+}
+
+async function svgToPngFile(svgMarkup) {
+  const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("No se pudo renderizar la imagen."));
+      img.src = svgUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("No se pudo preparar la imagen.");
+    ctx.drawImage(image, 0, 0);
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) resolve(result);
+        else reject(new Error("No se pudo exportar la imagen."));
+      }, "image/png");
+    });
+
+    return {
+      blob,
+      url: URL.createObjectURL(blob),
+    };
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
 }
 
 function ModalPortal({ children }) {
@@ -82,6 +290,7 @@ export default function Agenda() {
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const [aTitle, setATitle] = useState("");
   const [aDate, setADate] = useState(toISODateLocal(new Date()));
@@ -94,6 +303,11 @@ export default function Agenda() {
   const [wRole, setWRole] = useState("");
 
   const [modalError, setModalError] = useState("");
+  const [printWorkerId, setPrintWorkerId] = useState("");
+  const [printImageUrl, setPrintImageUrl] = useState("");
+  const [printError, setPrintError] = useState("");
+  const [printBusy, setPrintBusy] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const weekStart = useMemo(() => {
     const base = startOfWeekMonday(new Date());
@@ -164,6 +378,24 @@ export default function Agenda() {
     return map;
   }, [workers]);
 
+  const printWorker = useMemo(
+    () => workers.find((worker) => worker.id === printWorkerId) || null,
+    [workers, printWorkerId]
+  );
+
+  const printEventsByDay = useMemo(() => {
+    if (!printWorkerId) return Array.from({ length: 7 }, () => []);
+
+    return days.map((day, index) => {
+      const dateKey = toISODateLocal(day);
+      const dated = eventsByDate.get(dateKey) || [];
+      const recurring = eventsByWeekday[index] || [];
+      return [...dated, ...recurring]
+        .filter((event) => event.workerId === printWorkerId)
+        .sort((a, b) => parseTimeToMinutes(a.start) - parseTimeToMinutes(b.start));
+    });
+  }, [days, eventsByDate, eventsByWeekday, printWorkerId]);
+
   const matchesFilters = (e) => {
     const workerId = typeof e?.workerId === "string" ? e.workerId.trim() : "";
     const category = typeof e?.category === "string" && e.category.trim() ? e.category.trim() : "general";
@@ -184,26 +416,85 @@ export default function Agenda() {
   };
 
   useEffect(() => {
-    if (!assignOpen && !workerModalOpen) return;
+    if (!assignOpen && !workerModalOpen && !printOpen) return;
     const onKey = (e) => {
       if (e.key === "Escape") {
         if (workerModalOpen) setWorkerModalOpen(false);
+        else if (printOpen) setPrintOpen(false);
         else setAssignOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [assignOpen, workerModalOpen]);
+  }, [assignOpen, workerModalOpen, printOpen]);
 
   useEffect(() => {
-    const open = assignOpen || workerModalOpen;
+    const open = assignOpen || workerModalOpen || printOpen;
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [assignOpen, workerModalOpen]);
+  }, [assignOpen, workerModalOpen, printOpen]);
+
+  useEffect(() => {
+    if (!printOpen) return undefined;
+    if (!printWorkerId && workers[0]?.id) setPrintWorkerId(workers[0].id);
+    return undefined;
+  }, [printOpen, printWorkerId, workers]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function generatePrintImage() {
+      if (!printOpen || !printWorkerId) {
+        setPrintImageUrl("");
+        setPrintError("");
+        return;
+      }
+
+      setPrintBusy(true);
+      setPrintError("");
+      setCopySuccess(false);
+
+      try {
+        const svg = buildScheduleImageSvg({
+          worker: printWorker,
+          weekLabel: fmtWeekRange(days),
+          days,
+          eventsByDay: printEventsByDay,
+        });
+        const file = await svgToPngFile(svg);
+        if (!active) {
+          URL.revokeObjectURL(file.url);
+          return;
+        }
+
+        setPrintImageUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return file.url;
+        });
+      } catch (err) {
+        if (!active) return;
+        setPrintError(String(err?.message || "No se pudo generar la imagen."));
+      } finally {
+        if (active) setPrintBusy(false);
+      }
+    }
+
+    generatePrintImage();
+
+    return () => {
+      active = false;
+    };
+  }, [printOpen, printWorkerId, printWorker, days, printEventsByDay]);
+
+  useEffect(() => {
+    return () => {
+      if (printImageUrl) URL.revokeObjectURL(printImageUrl);
+    };
+  }, [printImageUrl]);
 
   const openAssign = () => {
     setModalError("");
@@ -218,6 +509,39 @@ export default function Agenda() {
     setAWorkerId(workers[0]?.id || "");
     setACategory("proyecto");
     setAssignOpen(true);
+  };
+
+  const openPrintModal = () => {
+    setPrintError("");
+    setCopySuccess(false);
+    const nextWorkerId =
+      workers.some((worker) => worker.id === filterWorkerId) ? filterWorkerId : workers[0]?.id || "";
+    setPrintWorkerId(nextWorkerId);
+    setPrintOpen(true);
+  };
+
+  const copyImageToClipboard = async () => {
+    if (!printImageUrl) return;
+    setPrintError("");
+    setCopySuccess(false);
+
+    try {
+      if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
+        throw new Error("Tu navegador no permite copiar imagenes directamente.");
+      }
+      const response = await fetch(printImageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type || "image/png"]: blob,
+        }),
+      ]);
+      setCopySuccess(true);
+    } catch (err) {
+      setPrintError(
+        String(err?.message || "No se pudo copiar la imagen. Revisa permisos del portapapeles.")
+      );
+    }
   };
 
   const saveAssignment = async (e) => {
@@ -285,6 +609,9 @@ export default function Agenda() {
         <div className="agActions">
           <button type="button" className="btn" onClick={openAssign}>
             Asignar trabajador
+          </button>
+          <button type="button" className="btnGhost" onClick={openPrintModal}>
+            Imprimir trabajador
           </button>
           <button type="button" className="btnGhost" onClick={() => setWeekOffset(0)}>
             Semana actual
@@ -637,6 +964,95 @@ export default function Agenda() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </ModalPortal>
+      ) : null}
+
+      {printOpen ? (
+        <ModalPortal>
+          <div
+            className="agModal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Imprimir horario por trabajador"
+          >
+            <button
+              type="button"
+              className="agModalOverlay"
+              onClick={() => setPrintOpen(false)}
+              aria-label="Cerrar"
+            />
+            <div className="agModalCard agPrintCard">
+              <div className="agModalTop">
+                <div>
+                  <div className="agModalTitle">Imprimir por trabajador</div>
+                  <div className="agModalSub">Se genera una imagen de la semana seleccionada.</div>
+                </div>
+                <button
+                  type="button"
+                  className="iconBtn"
+                  onClick={() => setPrintOpen(false)}
+                  aria-label="Cerrar"
+                >
+                  X
+                </button>
+              </div>
+
+              <div className="agModalBody agPrintBody">
+                <div className="agPrintControls">
+                  <label className="field agPrintWorkerField">
+                    <span className="fieldLabel">Trabajador</span>
+                    <select
+                      className="fieldInput"
+                      value={printWorkerId}
+                      onChange={(e) => setPrintWorkerId(e.target.value)}
+                    >
+                      {workers.map((worker) => (
+                        <option key={worker.id} value={worker.id}>
+                          {worker.name}
+                          {worker.role ? ` (${worker.role})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="agPrintWeek">
+                    <span className="fieldLabel">Semana</span>
+                    <strong>{fmtWeekRange(days)}</strong>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={copyImageToClipboard}
+                    disabled={!printImageUrl || printBusy || workers.length === 0}
+                  >
+                    Copiar imagen
+                  </button>
+                </div>
+
+                {printError ? <div className="error">{printError}</div> : null}
+                {copySuccess ? (
+                  <div className="success">La imagen ya se copio al portapapeles.</div>
+                ) : null}
+
+                {workers.length === 0 ? (
+                  <div className="empty agPrintEmpty">Agrega un trabajador antes de imprimir.</div>
+                ) : printBusy ? (
+                  <div className="empty agPrintEmpty">Generando imagen...</div>
+                ) : printImageUrl ? (
+                  <div className="agPrintPreviewWrap">
+                    <img
+                      className="agPrintPreview"
+                      src={printImageUrl}
+                      alt={`Horario semanal de ${printWorker?.name || "trabajador"}`}
+                    />
+                  </div>
+                ) : (
+                  <div className="empty agPrintEmpty">No se pudo generar la vista previa.</div>
+                )}
+              </div>
             </div>
           </div>
         </ModalPortal>
