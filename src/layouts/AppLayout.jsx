@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useState } from "react";
 import "./AppLayout.css";
 import { useAuth } from "../auth/AuthProvider";
+import logoMC from "../img/logoMC.png";
 
 const links = [
   { to: "/", label: "Inicio" },
@@ -25,8 +26,7 @@ export default function AppLayout() {
       <header className="topbar">
         <div className="topbarInner">
           <div className="brand">
-            <span className="brandMark" aria-hidden="true" />
-            <span className="brandText">MisterCheck</span>
+            <img className="brandLogo" src={logoMC} alt="MisterCheck" />
           </div>
 
           <div className="topbarAuth" style={{ marginLeft: "auto", marginRight: 12 }}>

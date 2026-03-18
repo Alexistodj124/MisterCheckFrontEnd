@@ -19,15 +19,13 @@
   gap: 14px;
 }
 
-.brand{ display:flex; align-items:center; gap:10px; }
-.brandMark{
-  width:14px;
-  height:14px;
-  border-radius:6px;
-  background: linear-gradient(135deg, var(--accent), #ffd27a);
-  box-shadow: 0 10px 30px rgba(240,180,41,.35);
+.brand{ display:flex; align-items:center; }
+.brandLogo{
+  display:block;
+  height: 80px;
+  width: auto;
+  object-fit: contain;
 }
-.brandText{ font-weight:700; letter-spacing:.2px; }
 
 .nav{ display:flex; gap: 6px; flex-wrap: wrap; justify-content:flex-end; }
 .navLink{
