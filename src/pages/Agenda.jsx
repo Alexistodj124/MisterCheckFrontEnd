@@ -298,6 +298,7 @@ export default function Agenda() {
   const [modalError, setModalError] = useState("");
   const [printWorkerId, setPrintWorkerId] = useState("");
   const [printImageUrl, setPrintImageUrl] = useState("");
+  const [printImageBlob, setPrintImageBlob] = useState(null);
   const [printError, setPrintError] = useState("");
   const [printBusy, setPrintBusy] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -450,6 +451,7 @@ export default function Agenda() {
     async function generatePrintImage() {
       if (!printOpen || !printWorkerId) {
         setPrintImageUrl("");
+        setPrintImageBlob(null);
         setPrintError("");
         return;
       }
@@ -475,8 +477,10 @@ export default function Agenda() {
           if (prev) URL.revokeObjectURL(prev);
           return file.url;
         });
+        setPrintImageBlob(file.blob);
       } catch (err) {
         if (!active) return;
+        setPrintImageBlob(null);
         setPrintError(String(err?.message || "No se pudo generar la imagen."));
       } finally {
         if (active) setPrintBusy(false);
@@ -521,7 +525,7 @@ export default function Agenda() {
   };
 
   const copyImageToClipboard = async () => {
-    if (!printImageUrl) return;
+    if (!printImageBlob) return;
     setPrintError("");
     setCopySuccess(false);
 
@@ -529,17 +533,18 @@ export default function Agenda() {
       if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
         throw new Error("Tu navegador no permite copiar imagenes directamente.");
       }
-      const response = await fetch(printImageUrl);
-      const blob = await response.blob();
       await navigator.clipboard.write([
         new ClipboardItem({
-          [blob.type || "image/png"]: blob,
+          "image/png": printImageBlob,
         }),
       ]);
       setCopySuccess(true);
     } catch (err) {
       setPrintError(
-        String(err?.message || "No se pudo copiar la imagen. Revisa permisos del portapapeles.")
+        String(
+          err?.message ||
+            "No se pudo copiar la imagen. Revisa permisos del portapapeles y que la app corra en un contexto permitido."
+        )
       );
     }
   };
@@ -1047,7 +1052,7 @@ export default function Agenda() {
                     type="button"
                     className="btn"
                     onClick={copyImageToClipboard}
-                    disabled={!printImageUrl || printBusy || workers.length === 0}
+                    disabled={!printImageBlob || printBusy || workers.length === 0}
                   >
                     Copiar imagen
                   </button>
