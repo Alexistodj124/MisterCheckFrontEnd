@@ -23,11 +23,6 @@ function categoryToTone(cat) {
   return "gray";
 }
 
-function categoryLabel(cat) {
-  const found = agendaCategories.find((c) => c.value === cat);
-  return found ? found.label : "General";
-}
-
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
@@ -189,8 +184,6 @@ function buildScheduleImageSvg({ worker, weekLabel, days, eventsByDay }) {
             `<rect x="${x + 10}" y="${y}" width="${dayWidth - 20}" height="${h}" rx="18" fill="${tone.fill}" fill-opacity="0.18" stroke="${tone.stroke}" stroke-opacity="0.95" />`,
             renderSvgText(titleLines, x + 24, y + 28, 20, "eventTitle"),
             `<text x="${x + 24}" y="${y + Math.min(h - 28, 92)}" class="eventMeta">${escapeXml(metaLabel)}</text>`,
-            `<rect x="${x + 24}" y="${y + h - 34}" width="122" height="22" rx="11" fill="${tone.tag}" fill-opacity="0.16" stroke="${tone.stroke}" stroke-opacity="0.55" />`,
-            `<text x="${x + 36}" y="${y + h - 19}" class="eventTag">${escapeXml(categoryLabel(event.category))}</text>`,
           ].join("");
         })
         .join("");
@@ -223,7 +216,6 @@ function buildScheduleImageSvg({ worker, weekLabel, days, eventsByDay }) {
           .hourLabel { font-size: 16px; fill: #8ea0c4; }
           .eventTitle { font-size: 19px; font-weight: 700; }
           .eventMeta { font-size: 15px; fill: #dce6ff; }
-          .eventTag { font-size: 13px; fill: #edf3ff; font-weight: 600; }
           .emptyTitle { font-size: 28px; font-weight: 700; }
           .emptyText { font-size: 18px; fill: #b7c2e6; }
         </style>
@@ -281,7 +273,7 @@ function ModalPortal({ children }) {
 }
 
 export default function Agenda() {
-  const { events, addEvent } = useAgenda();
+  const { events, addEvent, removeEvent } = useAgenda();
   const { workers, addWorker } = useWorkers();
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -291,6 +283,7 @@ export default function Agenda() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [workerModalOpen, setWorkerModalOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
+  const [deleteEventId, setDeleteEventId] = useState("");
 
   const [aTitle, setATitle] = useState("");
   const [aDate, setADate] = useState(toISODateLocal(new Date()));
@@ -308,6 +301,7 @@ export default function Agenda() {
   const [printError, setPrintError] = useState("");
   const [printBusy, setPrintBusy] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const weekStart = useMemo(() => {
     const base = startOfWeekMonday(new Date());
@@ -383,6 +377,11 @@ export default function Agenda() {
     [workers, printWorkerId]
   );
 
+  const selectedDeleteEvent = useMemo(
+    () => events.find((event) => event.id === deleteEventId) || null,
+    [events, deleteEventId]
+  );
+
   const printEventsByDay = useMemo(() => {
     if (!printWorkerId) return Array.from({ length: 7 }, () => []);
 
@@ -416,27 +415,28 @@ export default function Agenda() {
   };
 
   useEffect(() => {
-    if (!assignOpen && !workerModalOpen && !printOpen) return;
+    if (!assignOpen && !workerModalOpen && !printOpen && !deleteEventId) return;
     const onKey = (e) => {
       if (e.key === "Escape") {
         if (workerModalOpen) setWorkerModalOpen(false);
         else if (printOpen) setPrintOpen(false);
+        else if (deleteEventId) setDeleteEventId("");
         else setAssignOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [assignOpen, workerModalOpen, printOpen]);
+  }, [assignOpen, workerModalOpen, printOpen, deleteEventId]);
 
   useEffect(() => {
-    const open = assignOpen || workerModalOpen || printOpen;
+    const open = assignOpen || workerModalOpen || printOpen || Boolean(deleteEventId);
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [assignOpen, workerModalOpen, printOpen]);
+  }, [assignOpen, workerModalOpen, printOpen, deleteEventId]);
 
   useEffect(() => {
     if (!printOpen) return undefined;
@@ -598,6 +598,21 @@ export default function Agenda() {
     setWorkerModalOpen(false);
   };
 
+  const confirmDeleteEvent = async () => {
+    if (!deleteEventId) return;
+    setDeleteBusy(true);
+    setModalError("");
+
+    try {
+      await removeEvent(deleteEventId);
+      setDeleteEventId("");
+    } catch (err) {
+      setModalError(String(err?.message || "No se pudo eliminar el evento."));
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
   return (
     <section className="ag">
       <header className="agHeader">
@@ -728,6 +743,19 @@ export default function Agenda() {
                           className={`evt ${e.tone || "blue"}`}
                           style={{ top, height }}
                           title={`${e.title} (${e.start} - ${e.end})`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setModalError("");
+                            setDeleteEventId(e.id);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              setModalError("");
+                              setDeleteEventId(e.id);
+                            }
+                          }}
                         >
                           <div className="evtTitle">{e.title}</div>
                           <div className="evtTime">
@@ -738,13 +766,6 @@ export default function Agenda() {
                                 · {workerById.get(e.workerId)?.name || "Trabajador"}
                               </span>
                             ) : null}
-                          </div>
-                          <div className="evtTag">
-                            {categoryLabel(
-                              typeof e?.category === "string" && e.category.trim()
-                                ? e.category.trim()
-                                : "general"
-                            )}
                           </div>
                         </div>
                       );
@@ -1052,6 +1073,74 @@ export default function Agenda() {
                 ) : (
                   <div className="empty agPrintEmpty">No se pudo generar la vista previa.</div>
                 )}
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      ) : null}
+
+      {deleteEventId ? (
+        <ModalPortal>
+          <div
+            className="agModal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Eliminar evento"
+          >
+            <button
+              type="button"
+              className="agModalOverlay"
+              onClick={() => setDeleteEventId("")}
+              aria-label="Cerrar"
+            />
+            <div className="agModalCard">
+              <div className="agModalTop">
+                <div>
+                  <div className="agModalTitle">Eliminar evento</div>
+                  <div className="agModalSub">Esta accion no se puede deshacer.</div>
+                </div>
+                <button
+                  type="button"
+                  className="iconBtn"
+                  onClick={() => setDeleteEventId("")}
+                  aria-label="Cerrar"
+                >
+                  X
+                </button>
+              </div>
+
+              <div className="agModalBody">
+                <div className="empty agPrintEmpty">
+                  {selectedDeleteEvent ? (
+                    <span>
+                      Seguro que quieres eliminar <strong>{selectedDeleteEvent.title}</strong> de
+                      {" "}{selectedDeleteEvent.start} a {selectedDeleteEvent.end}?
+                    </span>
+                  ) : (
+                    <span>Seguro que quieres eliminar este evento?</span>
+                  )}
+                </div>
+
+                {modalError ? <div className="error">{modalError}</div> : null}
+
+                <div className="actions">
+                  <button
+                    type="button"
+                    className="btnGhost"
+                    onClick={() => setDeleteEventId("")}
+                    disabled={deleteBusy}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={confirmDeleteEvent}
+                    disabled={deleteBusy}
+                  >
+                    {deleteBusy ? "Eliminando..." : "Si, eliminar"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

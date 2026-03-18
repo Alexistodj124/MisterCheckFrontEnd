@@ -154,18 +154,6 @@
 .evtTime{ margin-top: 6px; color: var(--muted); font-size: 12px; }
 .evtWorker{ color: rgba(233,238,252,.85); }
 
-.evtTag{
-  margin-top: 6px;
-  display:inline-flex;
-  width: fit-content;
-  padding: 5px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(42,58,99,.45);
-  background: rgba(255,255,255,.04);
-  color: rgba(233,238,252,.9);
-  font-size: 11px;
-}
-
 .agHint{
   padding: 10px 12px;
   color: rgba(183,194,230,.85);
