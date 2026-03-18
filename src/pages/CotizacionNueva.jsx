@@ -178,8 +178,8 @@ export default function CotizacionNueva() {
     }, 0);
 
     const project = Number(projectPrice) || 0;
-    const total = itemsSubtotal + project;
-    return { itemsSubtotal, project, total };
+    const totalWithTax = itemsSubtotal + project * 1.12;
+    return { itemsSubtotal, project, totalWithTax };
   }, [rows, productById, projectPrice]);
 
   const openPicker = (rowId = "") => {
@@ -369,8 +369,8 @@ export default function CotizacionNueva() {
               <span className="totValue">{toMoney(totals.project)}</span>
             </div>
             <div className="totLine totStrong">
-              <span className="totLabel">Total</span>
-              <span className="totValue">{toMoney(totals.total)}</span>
+              <span className="totLabel">Total con IVA</span>
+              <span className="totValue">{toMoney(totals.totalWithTax)}</span>
             </div>
           </div>
         </div>
