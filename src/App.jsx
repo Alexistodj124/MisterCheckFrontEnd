@@ -12,6 +12,7 @@ import Configuracion from "./pages/Configuracion";
 import Reportes from "./pages/Reportes";
 import Herramientas from "./pages/Herramientas";
 import AsignarHerramientas from "./pages/AsignarHerramientas";
+import AsignarProyecto from "./pages/AsignarProyecto";
 import Agenda from "./pages/Agenda";
 import { InventoryProvider } from "./store/inventoryStore";
 import { ClientProvider } from "./store/clientStore";
@@ -19,6 +20,7 @@ import { QuoteProvider } from "./store/quoteStore";
 import { ToolProvider } from "./store/toolStore";
 import { WorkerProvider } from "./store/workerStore";
 import { AssignmentProvider } from "./store/assignmentStore";
+import { ProjectAssignmentProvider } from "./store/projectAssignmentStore";
 import { AgendaProvider } from "./store/agendaStore";
 import { AuthProvider } from "./auth/AuthProvider";
 
@@ -31,6 +33,7 @@ export default function App() {
             <ToolProvider>
               <WorkerProvider>
                 <AssignmentProvider>
+                  <ProjectAssignmentProvider>
                   <AgendaProvider>
                     <BrowserRouter>
                       <Routes>
@@ -57,12 +60,14 @@ export default function App() {
                             path="/herramientas/asignar"
                             element={<AsignarHerramientas />}
                           />
+                          <Route path="/proyectos/asignar" element={<AsignarProyecto />} />
                           <Route path="/agenda" element={<Agenda />} />
                           <Route path="/configuracion" element={<Configuracion />} />
                         </Route>
                       </Routes>
                     </BrowserRouter>
                   </AgendaProvider>
+                  </ProjectAssignmentProvider>
                 </AssignmentProvider>
               </WorkerProvider>
             </ToolProvider>

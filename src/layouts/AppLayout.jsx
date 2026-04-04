@@ -14,6 +14,7 @@ const links = [
   { to: "/reportes", label: "Reportes" },
   { to: "/herramientas", label: "Herramientas" },
   { to: "/herramientas/asignar", label: "Asignaciones" },
+  { to: "/proyectos/asignar", label: "Proyectos" },
   { to: "/configuracion", label: "Configuracion" },
 ];
 
