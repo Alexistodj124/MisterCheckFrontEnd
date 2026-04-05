@@ -53,6 +53,10 @@ export default function App() {
                             path="/cotizaciones/nueva"
                             element={<CotizacionNueva />}
                           />
+                          <Route
+                            path="/cotizaciones/:quoteId"
+                            element={<CotizacionNueva />}
+                          />
                           <Route path="/clientes" element={<Clientes />} />
                           <Route path="/reportes" element={<Reportes />} />
                           <Route path="/herramientas" element={<Herramientas />} />

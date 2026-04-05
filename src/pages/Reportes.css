@@ -174,6 +174,22 @@
 .startBox{ display:flex; gap: 10px; align-items:center; justify-content:flex-end; flex-wrap: wrap; }
 .startInline{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
 
+.rowActionGroup{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.rowActionBtn{
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
 .startBtn{ height: 38px; padding: 0 10px; border-radius: 12px; }
 
 .progEdit{ display:grid; gap: 6px; justify-items:end; }
@@ -217,6 +233,7 @@
   .progEdit{ justify-items: start; width: 100%; }
   .progRow{ justify-content:flex-start; }
   .progMeta{ text-align: left; }
+  .rowActionGroup{ justify-content:flex-start; margin-bottom: 0; }
 }
 
 .modalOverlay{

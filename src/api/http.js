@@ -64,3 +64,20 @@ export async function apiPatch(path, payload) {
 export async function apiDelete(path) {
   return apiJson(path, { method: "DELETE" });
 }
+
+export async function apiFetchFile(path, options) {
+  const resp = await apiFetch(path, options);
+  if (resp.ok) return resp;
+
+  const body = await readJsonSafely(resp);
+  const msg =
+    (body && body.error && typeof body.error.message === "string" && body.error.message) ||
+    resp.statusText ||
+    "Request failed";
+  const err = new Error(msg);
+  err.status = resp.status;
+  err.code = body && body.error ? body.error.code : undefined;
+  err.details = body && body.error ? body.error.details : undefined;
+  err.body = body;
+  throw err;
+}

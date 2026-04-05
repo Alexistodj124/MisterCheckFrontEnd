@@ -104,6 +104,14 @@ function daysRemainingLabel(q, nowMs) {
 }
 
 function totals(q) {
+  const apiTotal = Number(q?.grandTotal);
+  if (Number.isFinite(apiTotal)) {
+    return {
+      itemsSubtotal: Number(q?.subtotal) || 0,
+      project: Number(q?.taxAmount) || 0,
+      total: apiTotal,
+    };
+  }
   const itemsSubtotal = Array.isArray(q?.items)
     ? q.items.reduce((sum, it) => {
         const unit = Number(it?.unitCost) || 0;
@@ -141,7 +149,7 @@ function progressTone(q, nowMs) {
 }
 
 export default function Reportes() {
-  const { quotes, setQuoteStatus, setQuoteProgress } = useQuotes();
+  const { quotes, setQuoteStatus, setQuoteProgress, downloadQuotePdf } = useQuotes();
   const [status, setStatus] = useState("all");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -396,6 +404,18 @@ export default function Reportes() {
                   </div>
 
                   <div className="cell hideSm" role="cell">
+                    <div className="rowActionGroup">
+                      <Link to={`/cotizaciones/${q.id}`} className="btnGhost rowActionBtn">
+                        Editar
+                      </Link>
+                      <button
+                        type="button"
+                        className="btnGhost rowActionBtn"
+                        onClick={() => downloadQuotePdf(q.id).catch(() => {})}
+                      >
+                        PDF
+                      </button>
+                    </div>
                     {pending ? (
                       <div className="startBox">
                         <button
@@ -431,6 +451,18 @@ export default function Reportes() {
                   <div className="onlySm rowMeta">
                     <span>Total: {toMoney(t.total)}</span>
                     <span>Entrega: {remaining}</span>
+                    <span className="rowActionGroup">
+                      <Link to={`/cotizaciones/${q.id}`} className="btnGhost rowActionBtn">
+                        Editar
+                      </Link>
+                      <button
+                        type="button"
+                        className="btnGhost rowActionBtn"
+                        onClick={() => downloadQuotePdf(q.id).catch(() => {})}
+                      >
+                        PDF
+                      </button>
+                    </span>
                     {pending ? (
                       <span className="startInline">
                         <button
