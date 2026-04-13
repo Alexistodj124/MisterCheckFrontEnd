@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AppLayout from "./layouts/AppLayout";
+import LandingPage from "./pages/landing/LandingPage";
 import AuthCallback from "./pages/AuthCallback";
 import RequireAuth from "./auth/RequireAuth";
 import Home from "./pages/Home";
@@ -38,6 +39,7 @@ export default function App() {
                     <BrowserRouter>
                       <Routes>
                         <Route path="/auth/callback" element={<AuthCallback />} />
+                        <Route path="/landing" element={<LandingPage />} />
                         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
                           <Route path="/" element={<Home />} />
                           <Route path="/inventario" element={<Inventario />} />
