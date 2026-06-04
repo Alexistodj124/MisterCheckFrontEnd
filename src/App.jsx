@@ -3,6 +3,7 @@ import AppLayout from "./layouts/AppLayout";
 import LandingPage from "./pages/landing/LandingPage";
 import AuthCallback from "./pages/AuthCallback";
 import RequireAuth from "./auth/RequireAuth";
+import RequirePermission from "./auth/RequirePermission";
 import Home from "./pages/Home";
 import Inventario from "./pages/Inventario";
 import EditarProducto from "./pages/EditarProducto";
@@ -24,62 +25,127 @@ import { AssignmentProvider } from "./store/assignmentStore";
 import { ProjectAssignmentProvider } from "./store/projectAssignmentStore";
 import { AgendaProvider } from "./store/agendaStore";
 import { AuthProvider } from "./auth/AuthProvider";
+import { PermissionsProvider } from "./auth/PermissionsProvider";
 
 export default function App() {
   return (
     <AuthProvider>
-      <InventoryProvider>
-        <ClientProvider>
-          <QuoteProvider>
-            <ToolProvider>
-              <WorkerProvider>
-                <AssignmentProvider>
-                  <ProjectAssignmentProvider>
-                  <AgendaProvider>
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/auth/callback" element={<AuthCallback />} />
-                        <Route path="/landing" element={<LandingPage />} />
-                        <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-                          <Route path="/" element={<Home />} />
-                          <Route path="/inventario" element={<Inventario />} />
-                          <Route
-                            path="/inventario/nuevo"
-                            element={<NuevoProducto />}
-                          />
-                          <Route
-                            path="/inventario/editar/:productId"
-                            element={<EditarProducto />}
-                          />
-                          <Route
-                            path="/cotizaciones/nueva"
-                            element={<CotizacionNueva />}
-                          />
-                          <Route
-                            path="/cotizaciones/:quoteId"
-                            element={<CotizacionNueva />}
-                          />
-                          <Route path="/clientes" element={<Clientes />} />
-                          <Route path="/reportes" element={<Reportes />} />
-                          <Route path="/herramientas" element={<Herramientas />} />
-                          <Route
-                            path="/herramientas/asignar"
-                            element={<AsignarHerramientas />}
-                          />
-                          <Route path="/proyectos/asignar" element={<AsignarProyecto />} />
-                          <Route path="/agenda" element={<Agenda />} />
-                          <Route path="/configuracion" element={<Configuracion />} />
-                        </Route>
-                      </Routes>
-                    </BrowserRouter>
-                  </AgendaProvider>
-                  </ProjectAssignmentProvider>
-                </AssignmentProvider>
-              </WorkerProvider>
-            </ToolProvider>
-          </QuoteProvider>
-        </ClientProvider>
-      </InventoryProvider>
+      <PermissionsProvider>
+        <InventoryProvider>
+          <ClientProvider>
+            <QuoteProvider>
+              <ToolProvider>
+                <WorkerProvider>
+                  <AssignmentProvider>
+                    <ProjectAssignmentProvider>
+                      <AgendaProvider>
+                        <BrowserRouter>
+                          <Routes>
+                            <Route path="/auth/callback" element={<AuthCallback />} />
+                            <Route path="/landing" element={<LandingPage />} />
+                            <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+                              <Route path="/" element={<Home />} />
+                              <Route
+                                path="/inventario"
+                                element={
+                                  <RequirePermission perm="products:read">
+                                    <Inventario />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/inventario/nuevo"
+                                element={
+                                  <RequirePermission perm="products:create">
+                                    <NuevoProducto />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/inventario/editar/:productId"
+                                element={
+                                  <RequirePermission perm="products:update">
+                                    <EditarProducto />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/cotizaciones/nueva"
+                                element={
+                                  <RequirePermission perm="quotes:create">
+                                    <CotizacionNueva />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/cotizaciones/:quoteId"
+                                element={
+                                  <RequirePermission perm="quotes:read">
+                                    <CotizacionNueva />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/clientes"
+                                element={
+                                  <RequirePermission perm="clients:read">
+                                    <Clientes />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/reportes"
+                                element={
+                                  <RequirePermission perm="quotes:read">
+                                    <Reportes />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/herramientas"
+                                element={
+                                  <RequirePermission perm="tools:read">
+                                    <Herramientas />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/herramientas/asignar"
+                                element={
+                                  <RequirePermission perm="assignments:write">
+                                    <AsignarHerramientas />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/proyectos/asignar"
+                                element={
+                                  <RequirePermission perm="project-assignments:write">
+                                    <AsignarProyecto />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route
+                                path="/agenda"
+                                element={
+                                  <RequirePermission perm="agenda:read">
+                                    <Agenda />
+                                  </RequirePermission>
+                                }
+                              />
+                              <Route path="/configuracion" element={<Configuracion />} />
+                            </Route>
+                          </Routes>
+                        </BrowserRouter>
+                      </AgendaProvider>
+                    </ProjectAssignmentProvider>
+                  </AssignmentProvider>
+                </WorkerProvider>
+              </ToolProvider>
+            </QuoteProvider>
+          </ClientProvider>
+        </InventoryProvider>
+      </PermissionsProvider>
     </AuthProvider>
   );
 }

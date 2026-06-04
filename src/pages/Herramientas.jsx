@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTools } from "../store/toolStore";
 import { useWorkers } from "../store/workerStore";
 import { useAssignments } from "../store/assignmentStore";
+import { usePermissions } from "../auth/PermissionsProvider";
 import "./Herramientas.css";
 
 function normalize(s) {
@@ -62,6 +63,7 @@ export default function Herramientas() {
   const { tools, addTool, updateTool } = useTools();
   const { workers, addWorker, removeWorker } = useWorkers();
   const { assignments } = useAssignments();
+  const { can } = usePermissions();
 
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
@@ -272,9 +274,11 @@ export default function Herramientas() {
             <button type="button" className="btnGhost" onClick={openWorkers}>
               Trabajadores
             </button>
-            <button type="button" className="btn" onClick={openAdd}>
-              Agregar herramienta
-            </button>
+            {can("tools:create") && (
+              <button type="button" className="btn" onClick={openAdd}>
+                Agregar herramienta
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -402,16 +406,18 @@ export default function Herramientas() {
                   </div>
 
                   <div className="cell colActions" role="cell">
-                    <button
-                      type="button"
-                      className="btnGhost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEdit(t);
-                      }}
-                    >
-                      Editar
-                    </button>
+                    {can("tools:update") && (
+                      <button
+                        type="button"
+                        className="btnGhost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(t);
+                        }}
+                      >
+                        Editar
+                      </button>
+                    )}
                   </div>
 
                   {isOpen ? (
@@ -558,9 +564,11 @@ export default function Herramientas() {
         <div className="modalBody">
           <div className="workersTop">
             <div className="workersHint">Total: {workers.length}</div>
-            <button type="button" className="btn" onClick={openAddWorker}>
-              Agregar trabajador
-            </button>
+            {can("workers:create") && (
+              <button type="button" className="btn" onClick={openAddWorker}>
+                Agregar trabajador
+              </button>
+            )}
           </div>
 
           {workers.length === 0 ? (
@@ -576,6 +584,7 @@ export default function Herramientas() {
                       <div className="workerName">{w.name}</div>
                       <div className="workerRole">{w.role || "(Sin rol)"}</div>
                     </div>
+                    {can("workers:delete") && (
                      <button
                        type="button"
                        className="btnGhost btnDangerSoft"
@@ -589,6 +598,7 @@ export default function Herramientas() {
                      >
                        Eliminar
                      </button>
+                    )}
                   </div>
                 ))}
             </div>

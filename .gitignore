@@ -22,3 +22,34 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+master
+
+admin
+no editar productos
+agregar productos si
+agregar clientes si
+no editar clientes
+si nuevas cotizaciones(reportes)
+no modificar cotizaciones anteriores
+no editar herramientas 
+si agregar herramientas
+
+ventas
+Solo cotizaciones
+No editar plantillas ni guardar nueva ni actualizar
+Agenda compelta sin asignar
+clientes si agregar (solo editar, no eliminar)
+
+bodega
+Inventario (no editar producto, no agreagr)
+Agenda completa sin asignar
+Herramientas si no editar ni eliminar
+Asignaciones
+
+bodega 2
+Inventario (no editar producto, no agreagr)
+Agenda completa sin asignar
+Herramientas si no editar ni eliminar
+Asignaciones

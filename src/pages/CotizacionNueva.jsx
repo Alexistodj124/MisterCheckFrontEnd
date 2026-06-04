@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useInventory } from "../store/inventoryStore";
 import { useClients } from "../store/clientStore";
 import { useQuotes } from "../store/quoteStore";
+import { usePermissions } from "../auth/PermissionsProvider";
 import "./CotizacionNueva.css";
 
 const DEFAULT_TEMPLATE = {
@@ -252,6 +253,8 @@ export default function CotizacionNueva() {
   const navigate = useNavigate();
   const { quoteId } = useParams();
   const isEditing = Boolean(quoteId);
+  const { can } = usePermissions();
+  const canSaveQuote = isEditing ? can("quotes:update") : can("quotes:create");
 
   const { products } = useInventory();
   const { clients, addClient } = useClients();
@@ -753,12 +756,16 @@ export default function CotizacionNueva() {
               {success ? <div className="success">{success}</div> : null}
 
               <div className="actions actionsStack">
-                <button type="button" className="btnGhost" onClick={() => onSaveQuote({ download: false })} disabled={saving}>
-                  {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Guardar cotizacion"}
-                </button>
-                <button type="button" className="btn" onClick={() => onSaveQuote({ download: true })} disabled={saving}>
-                  {saving ? "Procesando..." : "Guardar y descargar PDF"}
-                </button>
+                {canSaveQuote && (
+                  <button type="button" className="btnGhost" onClick={() => onSaveQuote({ download: false })} disabled={saving}>
+                    {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Guardar cotizacion"}
+                  </button>
+                )}
+                {canSaveQuote && (
+                  <button type="button" className="btn" onClick={() => onSaveQuote({ download: true })} disabled={saving}>
+                    {saving ? "Procesando..." : "Guardar y descargar PDF"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -804,17 +811,21 @@ export default function CotizacionNueva() {
                     </p>
                   </div>
                   <div className="templateActions compactActions">
-                    <button type="button" className="btnGhost" onClick={onCreateTemplate} disabled={templateBusy}>
-                      Guardar nueva
-                    </button>
-                    <button
-                      type="button"
-                      className="btnGhost"
-                      onClick={onUpdateSelectedTemplate}
-                      disabled={templateBusy || !form.templateId}
-                    >
-                      Actualizar seleccionada
-                    </button>
+                    {can("quote-templates:create") && (
+                      <button type="button" className="btnGhost" onClick={onCreateTemplate} disabled={templateBusy}>
+                        Guardar nueva
+                      </button>
+                    )}
+                    {can("quote-templates:update") && (
+                      <button
+                        type="button"
+                        className="btnGhost"
+                        onClick={onUpdateSelectedTemplate}
+                        disabled={templateBusy || !form.templateId}
+                      >
+                        Actualizar seleccionada
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -978,17 +989,21 @@ export default function CotizacionNueva() {
                   </div>
 
                   <div className="templateActions">
-                    <button type="button" className="btnGhost" onClick={onCreateTemplate} disabled={templateBusy}>
-                      Guardar como nueva plantilla
-                    </button>
-                    <button
-                      type="button"
-                      className="btnGhost"
-                      onClick={onUpdateSelectedTemplate}
-                      disabled={templateBusy || !form.templateId}
-                    >
-                      Actualizar plantilla seleccionada
-                    </button>
+                    {can("quote-templates:create") && (
+                      <button type="button" className="btnGhost" onClick={onCreateTemplate} disabled={templateBusy}>
+                        Guardar como nueva plantilla
+                      </button>
+                    )}
+                    {can("quote-templates:update") && (
+                      <button
+                        type="button"
+                        className="btnGhost"
+                        onClick={onUpdateSelectedTemplate}
+                        disabled={templateBusy || !form.templateId}
+                      >
+                        Actualizar plantilla seleccionada
+                      </button>
+                    )}
                   </div>
                 </>
               ) : null}

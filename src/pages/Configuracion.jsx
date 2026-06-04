@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "../api/http";
 import { API_BASE_URL } from "../auth/apiFetch";
+import { usePermissions } from "../auth/PermissionsProvider";
 import { useAgenda } from "../store/agendaStore";
 import { useAssignments } from "../store/assignmentStore";
 import { useClients } from "../store/clientStore";
@@ -13,6 +14,8 @@ export default function Configuracion() {
   const [me, setMe] = useState(null);
   const [error, setError] = useState("");
   const [seeding, setSeeding] = useState(false);
+
+  const { isMaster } = usePermissions();
 
   const { refreshProducts } = useInventory();
   const { refreshClients } = useClients();
@@ -114,9 +117,11 @@ export default function Configuracion() {
               Crea datos iniciales si la base de datos esta vacia.
             </div>
           </div>
-          <button type="button" className="btn" onClick={seedDemo} disabled={seeding}>
-            {seeding ? "Cargando..." : "Seed demo"}
-          </button>
+          {isMaster && (
+            <button type="button" className="btn" onClick={seedDemo} disabled={seeding}>
+              {seeding ? "Cargando..." : "Seed demo"}
+            </button>
+          )}
         </div>
 
         {error ? <div className="error">{error}</div> : null}

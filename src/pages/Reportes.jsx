@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuotes } from "../store/quoteStore";
+import { usePermissions } from "../auth/PermissionsProvider";
 import "./Reportes.css";
 
 const MS_DAY = 86400000;
@@ -150,6 +151,7 @@ function progressTone(q, nowMs) {
 
 export default function Reportes() {
   const { quotes, setQuoteStatus, setQuoteProgress, downloadQuotePdf } = useQuotes();
+  const { can } = usePermissions();
   const [status, setStatus] = useState("all");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -270,9 +272,11 @@ export default function Reportes() {
           </div>
 
           <div className="repActions">
-            <Link to="/cotizaciones/nueva" className="btn">
-              Nueva cotizacion
-            </Link>
+            {can("quotes:create") && (
+              <Link to="/cotizaciones/nueva" className="btn">
+                Nueva cotizacion
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -374,19 +378,21 @@ export default function Reportes() {
 
                   <div className="cell" role="cell">
                     <span className={`statusPill ${statusClass(q.status)}`}>
-                      <select
-                        className="statusSelect"
-                        value={q.status}
-                        onChange={(e) => {
-                          const next = e.target.value;
-                          setQuoteStatus(q.id, next).catch(() => {});
-                        }}
-                        aria-label="Cambiar estado"
-                      >
-                        <option value="pendiente">Pendiente</option>
-                        <option value="en_curso">En curso</option>
-                        <option value="completada">Completada</option>
-                      </select>
+                      {can("quotes:status") && (
+                        <select
+                          className="statusSelect"
+                          value={q.status}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            setQuoteStatus(q.id, next).catch(() => {});
+                          }}
+                          aria-label="Cambiar estado"
+                        >
+                          <option value="pendiente">Pendiente</option>
+                          <option value="en_curso">En curso</option>
+                          <option value="completada">Completada</option>
+                        </select>
+                      )}
                       <span className="statusText">{labelStatus(q.status)}</span>
                     </span>
                   </div>
@@ -405,9 +411,11 @@ export default function Reportes() {
 
                   <div className="cell hideSm" role="cell">
                     <div className="rowActionGroup">
-                      <Link to={`/cotizaciones/${q.id}`} className="btnGhost rowActionBtn">
-                        Editar
-                      </Link>
+                      {can("quotes:update") && (
+                        <Link to={`/cotizaciones/${q.id}`} className="btnGhost rowActionBtn">
+                          Editar
+                        </Link>
+                      )}
                       <button
                         type="button"
                         className="btnGhost rowActionBtn"
@@ -418,13 +426,15 @@ export default function Reportes() {
                     </div>
                     {pending ? (
                       <div className="startBox">
-                        <button
-                          type="button"
-                          className="btnGhost startBtn"
-                          onClick={() => openStartModal(q)}
-                        >
-                          Poner en curso
-                        </button>
+                        {can("quotes:status") && (
+                          <button
+                            type="button"
+                            className="btnGhost startBtn"
+                            onClick={() => openStartModal(q)}
+                          >
+                            Poner en curso
+                          </button>
+                        )}
                       </div>
                     ) : inProgress ? (
                       <div className="progEdit" aria-label="Avance">
@@ -433,13 +443,15 @@ export default function Reportes() {
                             <span className="progSummaryLabel">Avance</span>
                             <span className="progSummaryValue">{pctShown}%</span>
                           </div>
-                          <button
-                            type="button"
-                            className="btnGhost progBtn"
-                            onClick={() => openProgressModal(q)}
-                          >
-                            Actualizar
-                          </button>
+                          {can("quotes:progress") && (
+                            <button
+                              type="button"
+                              className="btnGhost progBtn"
+                              onClick={() => openProgressModal(q)}
+                            >
+                              Actualizar
+                            </button>
+                          )}
                         </div>
                         <div className="progMeta">Ultima actualizacion: {lastUpdate}</div>
                       </div>
@@ -452,9 +464,11 @@ export default function Reportes() {
                     <span>Total: {toMoney(t.total)}</span>
                     <span>Entrega: {remaining}</span>
                     <span className="rowActionGroup">
-                      <Link to={`/cotizaciones/${q.id}`} className="btnGhost rowActionBtn">
-                        Editar
-                      </Link>
+                      {can("quotes:update") && (
+                        <Link to={`/cotizaciones/${q.id}`} className="btnGhost rowActionBtn">
+                          Editar
+                        </Link>
+                      )}
                       <button
                         type="button"
                         className="btnGhost rowActionBtn"
@@ -465,13 +479,15 @@ export default function Reportes() {
                     </span>
                     {pending ? (
                       <span className="startInline">
-                        <button
-                          type="button"
-                          className="btnGhost startBtn"
-                          onClick={() => openStartModal(q)}
-                        >
-                          Poner en curso
-                        </button>
+                        {can("quotes:status") && (
+                          <button
+                            type="button"
+                            className="btnGhost startBtn"
+                            onClick={() => openStartModal(q)}
+                          >
+                            Poner en curso
+                          </button>
+                        )}
                       </span>
                     ) : inProgress ? (
                       <span className="progEdit">
@@ -480,13 +496,15 @@ export default function Reportes() {
                             <span className="progSummaryLabel">Avance</span>
                             <span className="progSummaryValue">{pctShown}%</span>
                           </span>
-                          <button
-                            type="button"
-                            className="btnGhost progBtn"
-                            onClick={() => openProgressModal(q)}
-                          >
-                            Actualizar
-                          </button>
+                          {can("quotes:progress") && (
+                            <button
+                              type="button"
+                              className="btnGhost progBtn"
+                              onClick={() => openProgressModal(q)}
+                            >
+                              Actualizar
+                            </button>
+                          )}
                         </span>
                         <span className="progMeta">Ultima actualizacion: {lastUpdate}</span>
                       </span>

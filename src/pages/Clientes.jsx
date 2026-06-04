@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useClients } from "../store/clientStore";
+import { usePermissions } from "../auth/PermissionsProvider";
 import "./Clientes.css";
 
 function normalize(s) {
@@ -11,6 +12,7 @@ function normalize(s) {
 
 export default function Clientes() {
   const { clients, addClient, updateClient, removeClient, loading, error } = useClients();
+  const { can } = usePermissions();
   const [query, setQuery] = useState("");
   const [newName, setNewName] = useState("");
   const [localError, setLocalError] = useState("");
@@ -101,9 +103,11 @@ export default function Clientes() {
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nombre del cliente"
           />
-          <button type="button" className="btn" onClick={onAdd} disabled={loading}>
-            Agregar
-          </button>
+          {can("clients:create") && (
+            <button type="button" className="btn" onClick={onAdd} disabled={loading}>
+              Agregar
+            </button>
+          )}
         </div>
 
         {localError || error ? <div className="error">{localError || error}</div> : null}
@@ -137,9 +141,11 @@ export default function Clientes() {
                   <div className="cell colActions" role="cell">
                     {isEditing ? (
                       <>
-                        <button type="button" className="btn" onClick={onSaveEdit}>
-                          Guardar
-                        </button>
+                        {can("clients:update") && (
+                          <button type="button" className="btn" onClick={onSaveEdit}>
+                            Guardar
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btnGhost"
@@ -154,23 +160,27 @@ export default function Clientes() {
                       </>
                     ) : (
                       <>
-                        <button type="button" className="btnGhost" onClick={() => onStartEdit(c)}>
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="btnGhost btnDangerSoft"
-                          onClick={async () => {
-                            setLocalError("");
-                            try {
-                              await removeClient(c.id);
-                            } catch (e) {
-                              setLocalError(String(e?.message || "No se pudo eliminar."));
-                            }
-                          }}
-                        >
-                          Eliminar
-                        </button>
+                        {can("clients:update") && (
+                          <button type="button" className="btnGhost" onClick={() => onStartEdit(c)}>
+                            Editar
+                          </button>
+                        )}
+                        {can("clients:delete") && (
+                          <button
+                            type="button"
+                            className="btnGhost btnDangerSoft"
+                            onClick={async () => {
+                              setLocalError("");
+                              try {
+                                await removeClient(c.id);
+                              } catch (e) {
+                                setLocalError(String(e?.message || "No se pudo eliminar."));
+                              }
+                            }}
+                          >
+                            Eliminar
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

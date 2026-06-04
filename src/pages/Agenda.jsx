@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAgenda } from "../store/agendaStore";
 import { useWorkers } from "../store/workerStore";
+import { usePermissions } from "../auth/PermissionsProvider";
 import "./Agenda.css";
 
 const DAY_START_HOUR = 7;
@@ -275,6 +276,7 @@ function ModalPortal({ children }) {
 export default function Agenda() {
   const { events, addEvent, removeEvent } = useAgenda();
   const { workers, addWorker } = useWorkers();
+  const { can } = usePermissions();
   const [weekOffset, setWeekOffset] = useState(0);
 
   const [filterWorkerId, setFilterWorkerId] = useState("all");
@@ -627,9 +629,11 @@ export default function Agenda() {
         </div>
 
         <div className="agActions">
-          <button type="button" className="btn" onClick={openAssign}>
-            Asignar trabajador
-          </button>
+          {can("agenda:write") && (
+            <button type="button" className="btn" onClick={openAssign}>
+              Asignar trabajador
+            </button>
+          )}
           <button type="button" className="btnGhost" onClick={openPrintModal}>
             Imprimir trabajador
           </button>
@@ -751,11 +755,13 @@ export default function Agenda() {
                           role="button"
                           tabIndex={0}
                           onClick={() => {
+                            if (!can("agenda:write")) return;
                             setModalError("");
                             setDeleteEventId(e.id);
                           }}
                           onKeyDown={(event) => {
                             if (event.key === "Enter" || event.key === " ") {
+                              if (!can("agenda:write")) return;
                               event.preventDefault();
                               setModalError("");
                               setDeleteEventId(e.id);
@@ -891,16 +897,18 @@ export default function Agenda() {
                     </select>
                   </label>
 
-                  <button
-                    type="button"
-                    className="btnGhost"
-                    onClick={() => {
-                      setModalError("");
-                      setWorkerModalOpen(true);
-                    }}
-                  >
-                    Agregar trabajador
-                  </button>
+                  {can("workers:create") && (
+                    <button
+                      type="button"
+                      className="btnGhost"
+                      onClick={() => {
+                        setModalError("");
+                        setWorkerModalOpen(true);
+                      }}
+                    >
+                      Agregar trabajador
+                    </button>
+                  )}
                 </div>
 
                 {modalError ? <div className="error">{modalError}</div> : null}
@@ -1137,14 +1145,16 @@ export default function Agenda() {
                   >
                     Cancelar
                   </button>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={confirmDeleteEvent}
-                    disabled={deleteBusy}
-                  >
-                    {deleteBusy ? "Eliminando..." : "Si, eliminar"}
-                  </button>
+                  {can("agenda:write") && (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={confirmDeleteEvent}
+                      disabled={deleteBusy}
+                    >
+                      {deleteBusy ? "Eliminando..." : "Si, eliminar"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
